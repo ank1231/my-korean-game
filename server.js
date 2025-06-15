@@ -1,4 +1,4 @@
-// server.js - Render 전용! (글자 합치기 오류 해결판)
+// server.js - Render 전용! (SyntaxError 오타 완벽 수정 최종판!)
 const express = require('express');
 const { SpeechClient } = require('@google-cloud/speech');
 const multer = require('multer');
@@ -63,5 +63,32 @@ app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, r
             recognizedText = googleResponse.results[0].alternatives[0].transcript; 
             console.log(`컴퓨터가 알아들은 단어는 바로: "${recognizedText}"`);
 
+            // ⭐⭐⭐ 여기가 바로 오타가 있었던 부분이에요! 말끔하게 고쳤어요! ⭐⭐⭐
             const practiceWordNoSpace = practiceWord.replace(/\s+/g, '').trim().toLowerCase();
-            const recognizedTextNoSpace = recognizedText.replace(/\s+/
+            const recognizedTextNoSpace = recognizedText.replace(/\s+/g, '').trim().toLowerCase();
+
+            if (recognizedTextNoSpace === practiceWordNoSpace) {
+                feedbackMessageToUser = '정확해요! 👍 컴퓨터가 원래 단어("' + practiceWord + '")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "' + recognizedText + '")';
+            } else {
+                feedbackMessageToUser = '음... 컴퓨터는 "' + recognizedText + '" 라고 알아들었대요. 원래 단어는 "' + practiceWord + '" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기는 괜찮아요!)';
+            }
+            
+            res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
+        } else {
+            res.status(400).json({ success: false, errorMessage: feedbackMessageToUser });
+        }
+    } catch (error) { 
+        console.error('일꾼 로봇이 아파요! (API 호출 중 문제 발생):', error);
+        res.status(500).json({ success: false, errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요. 잠시 후 다시 시도해주세요!' });
+    }
+});
+
+// 일꾼 로봇아, 이제부터 손님을 기다려!
+app.listen(port, () => {
+    console.log(`🚀 얏호! 우리 게임 서버가 ${port}번 문에서 출발했어요! 🚀`);
+    if (initializationError) {
+        console.log("🚨 하지만, 구글 똑똑한 귀 준비에 실패해서 발음 평가는 안 될 거예요!");
+    } else {
+        console.log("🤫 Render 비밀금고에 있는 비밀 열쇠를 사용하고 있어요!");
+    }
+});
