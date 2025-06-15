@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국어 발음왕 도전 게임! (멀티 모드)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 한국어 발음왕 도전! 👑</h1>
+
+        <div id="mode-selection-area">
+    <h2>어떤 모드로 도전할까요?</h2>
+    <button id="start-how-many-btn" class="mode-button">🚀 얼마나 많이 통과?</button>
+    <button id="start-time-attack-btn" class="mode-button">⏱️ 60초 타임어택!</button> </div>
+
+        <div id="game-play-area" style="display: none;">
+            <div id="overall-timer-display" class="overall-timer-style">전체 시간: 60초</div> <div id="score-board" class="score-style">통과: 0개</div>
+
+            <div class="word-box">
+                <p>따라 읽어보세요:</p>
+                <h2 id="word-to-practice">준비!</h2>
+                <div id="timer-display" class="timer-style">단어 시간: 15초</div> </div>
+
+            <div class="action-buttons">
+                <button id="listen-button">🔊 소리 듣기</button>
+                <button id="record-button">🔴 녹음 시작</button>
+            </div>
+
+            <div class="feedback-box">
+                <h3>📢 게임 상태</h3>
+                <div id="my-feedback">
+                    <p>게임을 시작해주세요!</p>
+                </div>
+                <div id="loading-message" style="display: none;">확인 중...</div>
+            </div>
+        </div>
+
+        <div id="end-game-area" style="display: none;">
+            <h2 id="final-message">게임 결과!</h2>
+            <p id="final-score-display">점수: 0</p>
+            <button id="restart-game-btn" class="mode-button">💪 같은 모드 다시 도전!</button>
+            <button id="change-mode-btn" class="mode-button">🔄 다른 모드 선택</button>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
