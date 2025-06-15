@@ -1,129 +1,94 @@
-// 비밀 열쇠 숨겨둔 곳을 알려주는 도구를 제일 먼저 불러와요
-require('dotenv').config();
-
-// 필요한 도구들을 불러와요
+// server.js - Render 전용!
 const express = require('express');
-const { SpeechClient } = require('@google-cloud/speech'); // 구글의 똑똑한 귀 도구!
-const multer = require('multer'); // 목소리 녹음 파일 다루는 도구
+const { SpeechClient } = require('@google-cloud/speech');
+const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const port = 3000; // 우리 게임 웹페이지는 3000번 문으로 찾아올 수 있어요
+const port = process.env.PORT || 3000;
 
-// 구글의 똑똑한 귀(SpeechClient)를 준비시켜요!
-// 아까 .env 파일에 적어둔 비밀 열쇠 위치를 보고 알아서 준비할 거예요.
 let googleSpeechClient;
-try {
-    googleSpeechClient = new SpeechClient();
-    console.log("구글 똑똑한 귀 준비 완료!");
-} catch (error) {
-    console.error("앗! 구글 똑똑한 귀를 준비하다가 문제가 생겼어요. 비밀 열쇠 파일 위치를 확인해보세요!");
-    console.error(error);
-    // process.exit(1); // 문제가 심각하면 여기서 멈출 수도 있지만, 일단 그냥 진행해볼게요.
-}
+let initializationError = null;
 
-// 목소리 녹음 파일을 컴퓨터 메모리에 잠깐 저장하도록 설정해요
+// --- Render를 위한 구글 클라이언트 준비! ---
+console.log("--- Render 전용 구글 클라이언트 초기화를 시작합니다 ---");
+try {
+    // Render 비밀금고(Environment Variable)에 이 이름으로 된 비밀 정보가 꼭 있어야 해요!
+    if (!process.env.GOOGLE_CREDENTIALS_JSON_CONTENT) {
+        // 이 에러는 서버 시작 시에만 발생해서 문제를 바로 알 수 있어요.
+        throw new Error("Render 비밀금고에 GOOGLE_CREDENTIALS_JSON_CONTENT 변수가 설정되지 않았습니다!");
+    }
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON_CONTENT);
+    googleSpeechClient = new SpeechClient({ credentials });
+    console.log("✅ 성공! Render 비밀금고에서 비밀 열쇠를 찾아서 구글 똑똑한 귀를 준비했어요!");
+} catch (e) {
+    console.error("🚨🚨🚨 치명적 오류! 구글 똑똑한 귀 준비 실패! 🚨🚨🚨");
+    console.error("Render 비밀금고의 GOOGLE_CREDENTIALS_JSON_CONTENT 변수 이름과 값이 정확한지 다시 확인해주세요!");
+    console.error("오류 상세 내용:", e.message);
+    initializationError = e; // 에러를 저장해 둡니다.
+}
+console.log("--- 구글 클라이언트 초기화 끝 ---");
+
+
+// 'public' 폴더에 있는 파일들을 손님에게 보여주세요!
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 목소리 녹음 파일을 컴퓨터 메모리에 잠깐 저장하도록 설정
 const multerStorage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage: multerStorage });
 
-// 'public' 폴더에 있는 파일들(HTML, CSS, main.js)을 손님에게 보여주세요! 라고 알려줘요
-app.use(express.static(path.join(__dirname, 'public')));
-
-// 게임 웹페이지에서 "내 목소리 평가해줘!" 요청이 오면 여기가 일해요!
+// API 라우트
 app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, res) => {
-    console.log("음성 평가 요청이 도착했어요!");
-
-    // 목소리 파일이나 연습 단어가 없으면 알려줘요
-    if (!req.file) {
-        console.log("앗! 목소리 녹음 파일이 안 왔어요.");
-        return res.status(400).json({ success: false, errorMessage: '목소리 녹음 파일이 없어요!' });
-    }
-    if (!req.body.koreanWord) {
-        console.log("앗! 연습할 한국어 단어가 안 왔어요.");
-        return res.status(400).json({ success: false, errorMessage: '연습할 한국어 단어가 없어요!' });
+    // 서버 시작 시 구글 클라이언트 초기화에 실패했다면, 여기서 에러를 반환합니다.
+    if (initializationError || !googleSpeechClient) {
+        console.error("음성 평가 요청이 왔지만, 구글 클라이언트가 준비되지 않아서 처리할 수 없어요!");
+        return res.status(500).json({ success: false, errorMessage: '서버에 문제가 생겨서 음성 평가를 할 수 없어요. 관리자에게 문의해주세요!' });
     }
 
-    const practiceWord = req.body.koreanWord; // 연습할 단어
-    const audioFileBytes = req.file.buffer.toString('base64'); // 목소리 파일을 글자로 변환!
+    if (!req.file) return res.status(400).json({ success: false, errorMessage: '목소리 녹음 파일이 없어요!' });
+    if (!req.body.koreanWord) return res.status(400).json({ success: false, errorMessage: '연습할 한국어 단어가 없어요!' });
 
-    // 구글 똑똑한 귀에게 보낼 요청서 만들기
+    const practiceWord = req.body.koreanWord; 
+    const audioFileBytes = req.file.buffer.toString('base64'); 
+
     const audioRequestConfig = {
-        encoding: 'WEBM_OPUS',        // 우리 녹음 방식이에요
-        languageCode: 'ko-KR',        // 한국어예요!
-        model: 'latest_long',         // 구글에게 최신 긴 문장용 모델을 써달라고 부탁해요
-        // 이제 점수 평가는 안 할 거니까 pronunciationAssessmentConfig는 없어도 돼요!
+        encoding: 'WEBM_OPUS',        
+        languageCode: 'ko-KR',        
+        model: 'latest_long',         
     };
+    const audioDataForGoogle = { content: audioFileBytes };
+    const requestToGoogle = { audio: audioDataForGoogle, config: audioRequestConfig };
 
-    const audioDataForGoogle = {
-        content: audioFileBytes,
-    };
-
-    const requestToGoogle = {
-        audio: audioDataForGoogle,
-        config: audioRequestConfig, // 위에서 만든 설정 사용!
-    };
-
-    // 이제 구글에게 물어보고, 대답을 받아서 처리하는 부분을 간단하게 바꿔요!
     try {
-        console.log(`구글에게 "${practiceWord}" 단어를 그냥 한번 읽어보라고 할게요!`);
         const [googleResponse] = await googleSpeechClient.recognize(requestToGoogle);
-        
-        // 구글이 뭐라고 대답했는지 까만 창(터미널)에 자세히 보여줘요 (우리가 문제 찾을 때 필요해요!)
-        console.log("구글의 전체 응답 내용 (띄어쓰기 마법 적용 후):", JSON.stringify(googleResponse, null, 2)); 
+        let recognizedText = ""; 
+        let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥 다시 해볼까요?"; 
 
-        let recognizedText = ""; // 구글이 알아들은 글자를 담을 바구니
-        let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥 다시 해볼까요?"; // 기본 슬픈 메시지
-
-        // 구글이 뭔가 대답을 해줬는지, 그리고 그 안에 우리가 원하는 '알아들은 글자(transcript)'가 있는지 확인해요!
-        if (googleResponse.results && googleResponse.results.length > 0 &&
-            googleResponse.results[0].alternatives && googleResponse.results[0].alternatives.length > 0 &&
-            googleResponse.results[0].alternatives[0].transcript) {
-            
+        if (googleResponse.results && googleResponse.results.length > 0 && googleResponse.results[0].alternatives && googleResponse.results[0].alternatives.length > 0 && googleResponse.results[0].alternatives[0].transcript) {
             recognizedText = googleResponse.results[0].alternatives[0].transcript; 
-            console.log(`컴퓨터가 알아들은 단어는 바로: "${recognizedText}"`);
-
-            // ✨✨✨ 여기가 바로 "띄어쓰기 눈감아주기" 마법 주문이에요! ✨✨✨
-            // practiceWord와 recognizedText 둘 다의 모든 띄어쓰기를 없애고 비교해요!
             const practiceWordNoSpace = practiceWord.replace(/\s+/g, '').trim().toLowerCase();
             const recognizedTextNoSpace = recognizedText.replace(/\s+/g, '').trim().toLowerCase();
-
             if (recognizedTextNoSpace === practiceWordNoSpace) {
-                feedbackMessageToUser = `정확해요! 👍 컴퓨터가 원래 단어("${practiceWord}")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "${recognizedText}")`;
+                feedbackMessageToUser = `정확해요! 👍 컴퓨터가 원래 단어("<span class="math-inline">\{practiceWord\}"\)의 뜻을 정확히 알아들었어요\! \(컴퓨터가 들은 말\: "</span>{recognizedText}")`;
             } else {
-                feedbackMessageToUser = `음... 컴퓨터는 "${recognizedText}" 라고 알아들었대요. 원래 단어는 "${practiceWord}" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기는 괜찮아요!)`;
+                feedbackMessageToUser = `음... 컴퓨터는 "<span class="math-inline">\{recognizedText\}" 라고 알아들었대요\. 원래 단어는 "</span>{practiceWord}" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기는 괜찮아요!)`;
             }
-            
-            // 이제 웹페이지에게 결과를 알려줘요!
-            res.json({ 
-                success: true,
-                recognizedText: recognizedText, // 컴퓨터가 실제로 들은 건 그대로 보여줘요
-                feedbackMessage: feedbackMessageToUser,
-                practiceWord: practiceWord
-            });
-
+            res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
         } else {
-            console.warn("컴퓨터가 아무 글자도 못 알아들었나 봐요.");
-            res.status(400).json({ 
-                success: false,
-                errorMessage: feedbackMessageToUser 
-            });
+            res.status(400).json({ success: false, errorMessage: feedbackMessageToUser });
         }
-
     } catch (error) { 
-        console.error('일꾼 로봇이 아파요! (API 호출 또는 응답 처리 중 문제 발생):', error);
-        res.status(500).json({ 
-            success: false,
-            errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요. 잠시 후 다시 시도해주세요!' 
-        });
+        console.error('일꾼 로봇이 아파요! (API 호출 중 문제 발생):', error);
+        res.status(500).json({ success: false, errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요. 잠시 후 다시 시도해주세요!' });
     }
 });
 
-// 일꾼 로봇아, 이제부터 손님을 기다려! (서버 시작)
+// 일꾼 로봇아, 이제부터 손님을 기다려!
 app.listen(port, () => {
-    console.log(`얏호! 우리 게임 서버가 http://localhost:${port} 에서 다시 출발했어요!`);
-    console.log("비밀 열쇠 파일 위치도 확인했어요:", process.env.GOOGLE_APPLICATION_CREDENTIALS);
-    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS || !require('fs').existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
-        console.warn("경고! 비밀 열쇠 파일 위치를 못 찾았거나, 파일이 없어요. .env 파일을 확인해주세요!");
-        console.warn("구글 똑똑한 귀가 제대로 일하지 않을 수 있어요!");
+    console.log(`🚀 얏호! 우리 게임 서버가 ${port}번 문에서 출발했어요! 🚀`);
+    if (initializationError) {
+        console.log("🚨 하지만, 구글 똑똑한 귀 준비에 실패해서 발음 평가는 안 될 거예요!");
+    } else {
+        console.log("🤫 Render 비밀금고에 있는 비밀 열쇠를 사용하고 있어요!");
     }
 });
