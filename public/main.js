@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("페이지 로딩 완료! main.js 시작! (단순화 버전)");
+    console.log("페이지 로딩 완료! main.js 시작! (레벨 선택 기능 부활 버전)");
 
     // HTML 요소들
     const wordDisplayElement = document.getElementById('word-to-practice');
@@ -12,11 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreBoardElement = document.getElementById('score-board');
     
     const modeSelectionAreaElement = document.getElementById('mode-selection-area');
+    const levelSelectionAreaElement = document.getElementById('level-selection-area'); // ⭐ 레벨 선택 화면
     const gamePlayAreaElement = document.getElementById('game-play-area');
     const endGameAreaElement = document.getElementById('end-game-area');
 
     const startHowManyButtonElement = document.getElementById('start-how-many-btn');
     const startTimeAttackButtonElement = document.getElementById('start-time-attack-btn');
+    const startLevel1ButtonElement = document.getElementById('start-level-1-btn'); // ⭐ 레벨 1 버튼
+    const startLevel2ButtonElement = document.getElementById('start-level-2-btn'); // ⭐ 레벨 2 버튼
+    const startLevel3ButtonElement = document.getElementById('start-level-3-btn'); // ⭐ 레벨 3 버튼
+    const backToModeButtonElement = document.getElementById('back-to-mode-btn');   // ⭐ 뒤로가기 버튼
+    
     const restartGameButtonElement = document.getElementById('restart-game-btn');
     const changeModeButtonElement = document.getElementById('change-mode-btn');
     const finalMessageElement = document.getElementById('final-message');
@@ -31,37 +37,29 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // 게임 모드 및 상태 변수들
-    const MODE_HOW_MANY = 'HOW_MANY';
-    const MODE_TIME_ATTACK = 'TIME_ATTACK';
-    let currentGameMode = null;
-    let currentWordList = [];
-    // (이하 모든 변수와 함수는 이전과 거의 동일하지만, 레벨 선택 관련 복잡한 로직을 제거하고 단순화했습니다.)
+    const MODE_HOW_MANY = 'HOW_MANY'; const MODE_TIME_ATTACK = 'TIME_ATTACK';
+    let currentGameMode = null; let currentWordList = [];
     let currentWordToPractice = ""; let currentWordIndex = 0; let wordsPassedCount = 0; let gameIsActive = false;
     let mediaRecorderTool; let recordedAudioChunks = []; let isCurrentlyRecording = false; let currentAudioStream = null;
     const WORD_TIMER_SECONDS = 15; let wordTimeLeftInSeconds = WORD_TIMER_SECONDS; let wordTimerInterval;
     const OVERALL_GAME_SECONDS = 60; let overallGameTimeLeftInSeconds = OVERALL_GAME_SECONDS; let overallGameTimerInterval;
     
-    // --- 모든 함수 선언을 먼저 여기에 다 모아둘게요! ---
+    // --- 모든 함수 선언 ---
+
     function showScreen(screenToShow) {
         if (modeSelectionAreaElement) modeSelectionAreaElement.style.display = 'none';
+        if (levelSelectionAreaElement) levelSelectionAreaElement.style.display = 'none';
         if (gamePlayAreaElement) gamePlayAreaElement.style.display = 'none';
         if (endGameAreaElement) endGameAreaElement.style.display = 'none';
 
         if (screenToShow === 'modeSelection') modeSelectionAreaElement.style.display = 'block';
+        else if (screenToShow === 'levelSelection') levelSelectionAreaElement.style.display = 'block';
         else if (screenToShow === 'gamePlay') gamePlayAreaElement.style.display = 'block';
         else if (screenToShow === 'endGame') endGameAreaElement.style.display = 'block';
     }
 
-    function updateScoreBoard() {
-        if(!scoreBoardElement) return;
-        if (currentGameMode === MODE_TIME_ATTACK) {
-            scoreBoardElement.textContent = `성공: ${wordsPassedCount}개`;
-        } else {
-            scoreBoardElement.textContent = `통과: ${wordsPassedCount}개 / 총 ${currentWordList.length}개`;
-        }
-    }
-
-    // (이하 모든 함수 내용은 이전과 동일합니다. 복사해서 붙여넣으시면 됩니다.)
+    // (이하 모든 함수 내용은 이전과 동일합니다. 맨 마지막 버튼 연결 부분만 수정됩니다.)
+    function updateScoreBoard() { if(!scoreBoardElement) return; if (currentGameMode === MODE_TIME_ATTACK) { scoreBoardElement.textContent = `성공: ${wordsPassedCount}개`; } else { scoreBoardElement.textContent = `통과: ${wordsPassedCount}개 / 총 ${currentWordList.length}개`; } }
     function stopAllTimers() { clearInterval(wordTimerInterval); clearInterval(overallGameTimerInterval); }
     function stopWordTimer() { clearInterval(wordTimerInterval); }
     function stopOverallGameTimer() { clearInterval(overallGameTimerInterval); }
@@ -89,25 +87,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ⭐⭐⭐ 버튼 누르는 약속(이벤트 리스너)은 여기서 한번에! ⭐⭐⭐ ---
     if (startHowManyButtonElement) {
         startHowManyButtonElement.addEventListener('click', () => {
-            currentWordList = wordLevels.level1; // "얼마나 많이"는 기본으로 레벨 1 시작!
-            startGame(MODE_HOW_MANY);
+            currentGameMode = MODE_HOW_MANY;
+            showScreen('levelSelection'); // "얼마나 많이"는 레벨 선택 화면으로!
         });
     }
     if (startTimeAttackButtonElement) {
         startTimeAttackButtonElement.addEventListener('click', () => {
+            // 타임어택은 모든 레벨 단어를 섞어서 바로 시작!
             currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3];
             currentWordList.sort(() => Math.random() - 0.5); // 단어 순서 섞기!
             startGame(MODE_TIME_ATTACK);
         });
     }
+    // 레벨 버튼들에 대한 약속
+    if (startLevel1ButtonElement) startLevel1ButtonElement.addEventListener('click', () => { currentWordList = wordLevels.level1; startGame(MODE_HOW_MANY); });
+    if (startLevel2ButtonElement) startLevel2ButtonElement.addEventListener('click', () => { currentWordList = wordLevels.level2; startGame(MODE_HOW_MANY); });
+    if (startLevel3ButtonElement) startLevel3ButtonElement.addEventListener('click', () => { currentWordList = wordLevels.level3; startGame(MODE_HOW_MANY); });
+    if (backToModeButtonElement) backToModeButtonElement.addEventListener('click', () => showScreen('modeSelection'));
+    
+    // 게임 종료 후 버튼들에 대한 약속
     if (restartGameButtonElement) restartGameButtonElement.addEventListener('click', () => {
-        if(currentGameMode === MODE_TIME_ATTACK){ // 타임어택 재시작 시에는 단어 다시 섞어주기
+        if(currentGameMode === MODE_TIME_ATTACK){ // 타임어택 재시작
             currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3];
             currentWordList.sort(() => Math.random() - 0.5);
+            startGame(MODE_TIME_ATTACK);
+        } else if (currentGameMode === MODE_HOW_MANY) { // 얼마나 많이 재시작
+            // 실패했던 그 레벨(currentWordList) 그대로 다시 시작
+            startGame(MODE_HOW_MANY);
+        } else {
+            initializeGame(); 
         }
-        // "얼마나 많이"는 실패했던 레벨(currentWordList) 그대로 재시작
-        if(currentGameMode) startGame(currentGameMode); 
-        else initializeGame(); 
     });
     if (changeModeButtonElement) changeModeButtonElement.addEventListener('click', () => initializeGame());
     if (shareResultButtonElement) shareResultButtonElement.addEventListener('click', shareGameResult);
