@@ -1,10 +1,10 @@
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #f4f7f6; /* 부드러운 회색 배경 */
+    background-color: #f4f7f6; 
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* 화면 전체 높이 사용 */
+    min-height: 100vh; 
     margin: 0;
     padding: 20px;
     box-sizing: border-box;
@@ -21,21 +21,20 @@ body {
 }
 
 h1 {
-    color: #2c3e50; /* 진한 네이비 색 제목 */
+    color: #2c3e50; 
     margin-top: 0;
     margin-bottom: 30px;
     font-size: 2.2em;
 }
 
-/* --- 모드 선택 화면 스타일 --- */
-#mode-selection-area h2 {
-    color: #34495e; /* 약간 연한 네이비 */
+/* --- 모드 & 레벨 선택 화면 스타일 --- */
+#mode-selection-area h2, #level-selection-area h2 {
+    color: #34495e; 
     margin-bottom: 25px;
     font-size: 1.6em;
 }
 
-.mode-button { /* 모드 버튼, 다시 도전 버튼, 다른 모드 선택 버튼 공통 스타일 */
-    background-color: #3498db; /* 파란색 계열 */
+.mode-button, .level-button, .back-button { /* 모든 버튼에 기본 스타일 적용 */
     color: white;
     border: none;
     padding: 15px 25px;
@@ -44,141 +43,64 @@ h1 {
     cursor: pointer;
     font-size: 1.2em;
     font-weight: bold;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    min-width: 200px; /* 버튼 최소 너비 */
+    transition: all 0.2s ease;
+    display: block; /* 버튼들이 한 줄에 하나씩 나오도록 */
+    width: 80%; /* 너비 통일 */
+    margin-left: auto; /* 가운데 정렬 */
+    margin-right: auto;
 }
 
-.mode-button:hover:not(:disabled) {
-    background-color: #2980b9; /* 마우스 올리면 진한 파란색 */
-    transform: translateY(-2px); /* 살짝 떠오르는 효과 */
-}
-.mode-button:active:not(:disabled) {
-    transform: translateY(0px); /* 클릭하면 원래 위치로 */
+.mode-button:hover:not(:disabled), .level-button:hover:not(:disabled) {
+    transform: translateY(-3px); /* 마우스 올리면 살짝 떠오르는 효과 */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
+.mode-button { background-color: #3498db; }
+.mode-button:hover:not(:disabled) { background-color: #2980b9; }
+
+/* ⭐ 레벨별 버튼 색깔 다르게! ⭐ */
+.level-button.level-1 { background-color: #2ecc71; } /* 초록 */
+.level-button.level-1:hover:not(:disabled) { background-color: #27ae60; }
+.level-button.level-2 { background-color: #f39c12; } /* 주황 */
+.level-button.level-2:hover:not(:disabled) { background-color: #e67e22; }
+.level-button.level-3 { background-color: #e74c3c; } /* 빨강 */
+.level-button.level-3:hover:not(:disabled) { background-color: #c0392b; }
+
+.back-button {
+    background-color: #95a5a6; /* 회색 */
+    font-size: 1em; /* 뒤로가기 버튼은 살짝 작게 */
+    padding: 10px 20px;
+    width: auto; /* 너비는 글자에 맞게 */
+    display: inline-block; /* 다른 버튼들과 다르게 */
+    margin-top: 20px;
+}
+.back-button:hover:not(:disabled) { background-color: #7f8c8d; }
+
+/* 모든 비활성화 버튼 공통 */
+.mode-button:disabled, .level-button:disabled, .action-buttons button:disabled { 
+    background-color: #bdc3c7 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
 
 /* --- 게임 진행 화면 스타일 --- */
-#overall-timer-display { /* ⭐ 전체 타이머 스타일 추가! ⭐ */
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #e67e22; /* 주황색 계열 */
-    margin-bottom: 10px;
-    padding: 8px;
-    background-color: #fdf2e2;
-    border-radius: 8px;
-}
-
-#score-board {
-    font-size: 1.3em; /* 점수판 글씨 크기 키움 */
-    font-weight: bold;
-    color: #16a085; /* 청록색 계열 */
-    margin-bottom: 20px;
-    padding: 10px;
-    background-color: #e8f8f5;
-    border-radius: 8px;
-}
-
-.word-box {
-    margin-bottom: 20px;
-}
-
-.word-box p {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 1em;
-    color: #555;
-}
-
-.word-box h2 { /* 연습 단어/문장 */
-    font-size: 2.5em; /* 글씨 크기 살짝 키움 */
-    color: #2980b9; /* 파란색 계열 */
-    margin-top: 5px;
-    margin-bottom: 12px;
-    min-height: 80px; /* 최소 높이 늘림 */
-    height: auto;
-    line-height: 1.4;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 12px;
-    background-color: #ecf0f1;
-    border-radius: 12px;
-}
-
-.timer-style { /* 단어별 타이머 */
-    font-size: 1.1em;
-    color: #c0392b; /* 빨간색 계열 */
-    margin-top: 10px;
-    margin-bottom: 15px;
-    font-weight: bold;
-}
-
-.action-buttons button {
-    background-color: #27ae60; /* 초록색 계열 */
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    margin: 8px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.2s ease;
-}
-
-.action-buttons button:hover:not(:disabled) {
-    background-color: #1e8449;
-}
-
-.action-buttons button:disabled { /* 게임 중 버튼 비활성화 스타일 */
-    background-color: #bdc3c7;
-    cursor: not-allowed;
-}
-
-#record-button.recording {
-    background-color: #d35400; /* 주황색 계열 (녹음 중) */
-}
-
-#record-button.recording:hover:not(:disabled) {
-    background-color: #a04000;
-}
-
-.feedback-box {
-    margin-top: 25px;
-    padding: 18px;
-    background-color: #f9fbe7; /* 연한 노랑/녹색 배경 */
-    border-radius: 12px;
-    min-height: 85px;
-    line-height: 1.6;
-}
-
-.feedback-box h3 {
-    margin-top: 0;
-    margin-bottom: 12px;
-    color: #555;
-    font-size: 1.2em;
-}
-
-#my-feedback p, #my-feedback h3 { /* 피드백 결과 글씨/제목 */
-    font-size: 1.1em;
-    color: #333;
-    margin: 8px 0;
-}
-
-#loading-message {
-    font-weight: bold;
-    color: #2980b9;
-    margin-top: 12px;
-}
-
-/* --- 게임 종료 화면 스타일 --- */
-#end-game-area h2 { /* 최종 메시지 제목 */
-    font-size: 1.8em;
-    margin-bottom: 15px;
-}
-#end-game-area p { /* 최종 점수 */
-    font-size: 1.4em;
-    margin-bottom: 25px;
-}
-/* 다시 도전, 다른 모드 선택 버튼은 .mode-button 스타일 공유 */
+/* (이하 게임 진행/종료 화면 스타일은 이전과 동일) */
+#overall-timer-display { font-size: 1.4em; font-weight: bold; color: #e67e22; margin-bottom: 10px; padding: 8px; background-color: #fdf2e2; border-radius: 8px; }
+#score-board { font-size: 1.3em; font-weight: bold; color: #16a085; margin-bottom: 20px; padding: 10px; background-color: #e8f8f5; border-radius: 8px; }
+.word-box { margin-bottom: 20px; }
+.word-box p { margin-top: 0; margin-bottom: 8px; font-size: 1em; color: #555; }
+.word-box h2 { font-size: 2.5em; color: #2980b9; margin-top: 5px; margin-bottom: 12px; min-height: 80px; height: auto; line-height: 1.4; word-break: keep-all; overflow-wrap: break-word; display: flex; justify-content: center; align-items: center; padding: 12px; background-color: #ecf0f1; border-radius: 12px; }
+.timer-style { font-size: 1.1em; color: #c0392b; margin-top: 10px; margin-bottom: 15px; font-weight: bold; }
+.action-buttons button { background-color: #27ae60; color: white; border: none; padding: 12px 22px; margin: 8px; border-radius: 10px; cursor: pointer; font-size: 1.1em; transition: background-color 0.2s ease; }
+.action-buttons button:hover:not(:disabled) { background-color: #1e8449; }
+#record-button.recording { background-color: #d35400; }
+#record-button.recording:hover:not(:disabled) { background-color: #a04000; }
+.feedback-box { margin-top: 25px; padding: 18px; background-color: #f9fbe7; border-radius: 12px; min-height: 85px; line-height: 1.6; }
+.feedback-box h3 { margin-top: 0; margin-bottom: 12px; color: #555; font-size: 1.2em; }
+#my-feedback p, #my-feedback h3 { font-size: 1.1em; color: #333; margin: 8px 0; }
+#loading-message { font-weight: bold; color: #2980b9; margin-top: 12px; }
+#end-game-area h2 { font-size: 1.8em; margin-bottom: 15px; }
+#end-game-area p { font-size: 1.4em; margin-bottom: 25px; }
+.share-button { background-color: #ffc107; color: #333; }
+.share-button:hover:not(:disabled) { background-color: #e0a800; color: #000; }
