@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalScoreDisplayElement = document.getElementById('final-score-display');
     const shareResultButtonElement = document.getElementById('share-result-btn');
 
-    const koreanWords = [ "강아지", "고양이", "안녕하세요", "감사합니다", "상표 붙인 큰 깡통은 깐 깡통인가 안 깐 깡통인가", "서울특별시 수석비서관 심수성씨는 오늘 세금계산서를 세밀하고 세심하게 살펴보았다", "한영양장점 옆 한양양장점 한양양장점 옆 한영양장점", "경찰청 철창살은 외철창살이냐 쌍철창살이냐" ];
+    const koreanWords = [ "강아지", "고양이", "안녕하세요", "한국관광공사 곽진광 관광과장", "상표 붙인 큰 깡통은 깐 깡통인가 안 깐 깡통인가", "서울특별시 수석비서관 심수성씨는 오늘 세금계산서를 세밀하고 세심하게 살펴보았다", "경찰청 철창살은 외철창살이냐 쌍철창살이냐" ];
     const MODE_HOW_MANY = 'HOW_MANY'; const MODE_TIME_ATTACK = 'TIME_ATTACK';
     let currentGameMode = null; let currentWordToPractice = ""; let currentWordIndex = 0; let wordsPassedCount = 0; let gameIsActive = false;
     let mediaRecorderTool; let recordedAudioChunks = []; let isCurrentlyRecording = false; let currentAudioStream = null;
