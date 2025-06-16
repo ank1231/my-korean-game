@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareResultButtonElement = document.getElementById('share-result-btn');
 
     // 게임 단어 목록
-    const koreanWords = [ "강아지", "고양이", "안녕하세요", "한국관광공사 곽진광 관광과장", "상표 붙인 큰 깡통은 깐 깡통인가 안 깐 깡통인가", "서울특별시 수석비서관 심수성씨는 오늘 세금계산서를 세밀하고 세심하게 살펴보았다", "경찰청 철창살은 외철창살이냐 쌍철창살이냐" ];
+    const koreanWords = [ "강아지", "고양이", "안녕하세요", "챠프포프킨", "상표 붙인 큰 깡통은 깐 깡통인가 안 깐 깡통인가", "한국관광공사 곽진광 관광과장", "경찰청 철창살은 외철창살이냐 쌍철창살이냐" ];
     
     // 게임 모드 및 상태 변수들
     const MODE_HOW_MANY = 'HOW_MANY'; const MODE_TIME_ATTACK = 'TIME_ATTACK';
