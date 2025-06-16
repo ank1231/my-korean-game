@@ -3,25 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한국어 발음 게임! (멀티 모드)</title>
+    <title>한국어 발음왕 도전 게임! (레벨 시스템 적용)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎤 한국어 발음 게임! 👑</h1>
+        <h1>🎤 한국어 발음왕 도전! 👑</h1>
 
         <div id="mode-selection-area">
-    <h2>어떤 모드로 도전할까요?</h2>
-    <button id="start-how-many-btn" class="mode-button">🚀 얼마나 많이 통과?</button>
-    <button id="start-time-attack-btn" class="mode-button">⏱️ 60초 타임어택!</button> </div>
+            <h2>어떤 모드로 도전할까요?</h2>
+            <button id="start-how-many-btn" class="mode-button">🚀 얼마나 많이 통과?</button>
+            <button id="start-time-attack-btn" class="mode-button">⏱️ 60초 타임어택!</button>
+        </div>
+        
+        <div id="level-selection-area" style="display: none;">
+            <h2>레벨을 선택하세요!</h2>
+            <button id="start-level-1-btn" class="level-button level-1">레벨 1: 자신감 뿜뿜반 💪</button>
+            <button id="start-level-2-btn" class="level-button level-2">레벨 2: 혀가 꼬일락 말락반 🤪</button>
+            <button id="start-level-3-btn" class="level-button level-3">레벨 3: 최종보스! 발음의 신 👑</button>
+            <button id="back-to-mode-btn" class="back-button">« 모드 다시 선택</button>
+        </div>
 
         <div id="game-play-area" style="display: none;">
-            <div id="overall-timer-display" class="overall-timer-style">전체 시간: 60초</div> <div id="score-board" class="score-style">통과: 0개</div>
+            <div id="overall-timer-display" class="overall-timer-style">전체 시간: 60초</div>
+            <div id="score-board" class="score-style">통과: 0개</div>
 
             <div class="word-box">
                 <p>따라 읽어보세요:</p>
                 <h2 id="word-to-practice">준비!</h2>
-                <div id="timer-display" class="timer-style">단어 시간: 15초</div> </div>
+                <div id="timer-display" class="timer-style">단어 시간: 15초</div>
+            </div>
 
             <div class="action-buttons">
                 <button id="listen-button">🔊 소리 듣기</button>
@@ -42,6 +53,7 @@
             <p id="final-score-display">점수: 0</p>
             <button id="restart-game-btn" class="mode-button">💪 같은 모드 다시 도전!</button>
             <button id="change-mode-btn" class="mode-button">🔄 다른 모드 선택</button>
+            <button id="share-result-btn" class="mode-button share-button">✨ SNS에 결과 자랑하기!</button>
         </div>
     </div>
     <script src="main.js"></script>
