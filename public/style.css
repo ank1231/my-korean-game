@@ -36,9 +36,9 @@ h1 { color: #2c3e50; margin-top: 0; margin-bottom: 30px; font-size: 2.2em; }
 #save-score-btn { font-size: 1.1em; width: 80%; background-color: #1abc9c; padding: 12px; }
 #save-score-btn:hover:not(:disabled) { background-color: #16a085; }
 #leaderboard-area ol { list-style: none; padding: 0; margin: 0; }
-#leaderboard-area li { background-color: #ecf0f1; padding: 12px; margin-bottom: 8px; border-radius: 5px; font-size: 1.2em; font-weight: bold; text-align: left; display: flex; justify-content: space-between; }
-#leaderboard-area li:nth-child(1) { background-color: #f1c40f; color: white; } /* 1등 */
-#leaderboard-area li:nth-child(2) { background-color: #bdc3c7; } /* 2등 */
-#leaderboard-area li:nth-child(3) { background-color: #e67e22; color: white; } /* 3등 */
+#leaderboard-area li { background-color: #ecf0f1; padding: 12px; margin-bottom: 8px; border-radius: 5px; font-size: 1.2em; font-weight: bold; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+#leaderboard-area li:nth-child(1) { background-color: #f1c40f; color: #333; }
+#leaderboard-area li:nth-child(2) { background-color: #bdc3c7; }
+#leaderboard-area li:nth-child(3) { background-color: #e67e22; color: white; }
 .nickname { flex-grow: 1; text-align: left; padding-left: 10px; }
 .score { font-weight: normal; }
