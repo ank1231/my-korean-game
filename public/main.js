@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🔵 2단계 main.js가 시작되었습니다! ('레벨별 발음연습' 기능 추가) 🔵");
+    console.log("페이지 로딩 완료! main.js 시작! (모든 오류 수정 최종판)");
 
     // --- 모든 HTML 요소들을 elements 라는 큰 상자에 담아두기 ---
     const elements = {
@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listenButton: document.getElementById('listen-button'),
         recordButton: document.getElementById('record-button'),
         feedbackArea: document.getElementById('my-feedback'),
+        feedbackTitle: document.getElementById('feedback-title'),
         loadingMessage: document.getElementById('loading-message'),
         wordTimerDisplay: document.getElementById('timer-display'),
         overallTimerDisplay: document.getElementById('overall-timer-display'),
@@ -47,15 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentWordToPractice = ""; let currentWordIndex = 0; let wordsPassedCount = 0; let gameIsActive = false;
     let mediaRecorderTool; let recordedAudioChunks = []; let isCurrentlyRecording = false; let currentAudioStream = null;
     const WORD_TIMER_SECONDS = 15; let wordTimeLeftInSeconds = WORD_TIMER_SECONDS; let wordTimerInterval;
-    let voices = []; // 소리 듣기용 목소리 목록
+    const OVERALL_GAME_SECONDS = 60; let overallGameTimeLeftInSeconds = OVERALL_GAME_SECONDS; let overallGameTimerInterval;
+    let voices = [];
 
     // --- 우리가 사용할 모든 마법 주문(함수)들을 미리 다 가르쳐주기! ---
+    
     function showScreen(screenToShow) {
-        Object.values(elements).forEach(el => {
-            if (el && el.id && el.id.includes('-area')) {
-                el.style.display = 'none';
-            }
-        });
+        if (elements.modeSelectionArea) elements.modeSelectionArea.style.display = 'none';
+        if (elements.levelSelectionArea) elements.levelSelectionArea.style.display = 'none';
+        if (elements.gamePlayArea) elements.gamePlayArea.style.display = 'none';
+        if (elements.endGameArea) elements.endGameArea.style.display = 'none';
+        if(elements.leaderboardArea) elements.leaderboardArea.style.display = 'none';
         if (elements[screenToShow + 'Area']) {
             elements[screenToShow + 'Area'].style.display = 'block';
         }
@@ -63,37 +66,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateScoreBoard() {
         if(!elements.scoreBoard) return;
-        if (currentGameMode === MODE_LEVEL_PRACTICE) {
+        if (currentGameMode === MODE_SCORE_ATTACK) {
+            elements.scoreBoard.textContent = `현재 점수: ${wordsPassedCount}점`;
+        } else if (currentGameMode === MODE_LEVEL_PRACTICE) {
             elements.scoreBoard.textContent = `통과: ${wordsPassedCount}개 / 총 ${currentWordList.length}개`;
-        } else { // 다른 모드들은 나중에 추가!
+        } else {
             elements.scoreBoard.textContent = '점수';
         }
     }
-
+    
+    // ⭐⭐⭐ 제가 빼먹었던 바로 그 함수!!! 여기 다시 넣었어요! ⭐⭐⭐
+    function stopAllTimers() {
+        clearInterval(wordTimerInterval);
+        clearInterval(overallGameTimerInterval);
+    }
     function stopWordTimer() { clearInterval(wordTimerInterval); }
+    function stopOverallGameTimer() { clearInterval(overallGameTimerInterval); }
+    // ⭐⭐⭐ 여기까지! ⭐⭐⭐
+
     function resetWordTimerDisplay(){ if (elements.wordTimerDisplay) { elements.wordTimerDisplay.textContent = `단어 시간: ${WORD_TIMER_SECONDS}초`; elements.wordTimerDisplay.style.color = '#c0392b'; } }
+    function resetOverallGameTimerDisplay(){ if (elements.overallTimerDisplay) { elements.overallTimerDisplay.textContent = `전체 시간: ${OVERALL_GAME_SECONDS}초`; elements.overallTimerDisplay.style.color = '#e67e22'; } }
     function resetWordTimer() { wordTimeLeftInSeconds = WORD_TIMER_SECONDS; resetWordTimerDisplay(); }
+    function resetOverallGameTimer() { overallGameTimeLeftInSeconds = OVERALL_GAME_SECONDS; resetOverallGameTimerDisplay(); }
+
     function startWordTimer() {
         if (currentGameMode !== MODE_LEVEL_PRACTICE || !gameIsActive) return;
-        stopWordTimer(); 
+        stopWordTimer();
         wordTimerInterval = setInterval(() => {
             if (!gameIsActive) { stopWordTimer(); return; }
             wordTimeLeftInSeconds--;
             if (elements.wordTimerDisplay) elements.wordTimerDisplay.textContent = `단어 시간: ${wordTimeLeftInSeconds}초`;
-            if (wordTimeLeftInSeconds <= 0) {
-                // 이 함수는 아직 안 만들었지만, '단어 실패'와 같음
-                handleWordFailure(); 
-            } else if (wordTimeLeftInSeconds <= 5) {
-                if(elements.wordTimerDisplay) elements.wordTimerDisplay.style.color = 'orange';
-            }
+            if (wordTimeLeftInSeconds <= 0) handleWordFailure();
+            else if (wordTimeLeftInSeconds <= 5) elements.wordTimerDisplay.style.color = 'orange';
+        }, 1000);
+    }
+
+    function startOverallGameTimer() {
+        if (currentGameMode !== MODE_TIME_ATTACK || !gameIsActive) return;
+        stopOverallGameTimer();
+        overallGameTimerInterval = setInterval(() => {
+            if (!gameIsActive) { stopOverallGameTimer(); return; }
+            overallGameTimeLeftInSeconds--;
+            if (elements.overallTimerDisplay) elements.overallTimerDisplay.textContent = `전체 시간: ${overallGameTimeLeftInSeconds}초`;
+            if (overallGameTimeLeftInSeconds <= 0) handleGameEnd();
+            else if (overallGameTimeLeftInSeconds <= 10) elements.overallTimerDisplay.style.color = '#e74c3c';
         }, 1000);
     }
     
     function presentNextWord() {
         if (!gameIsActive) return;
-        // '얼마나 많이' 모드에서는 모든 단어를 통과하면 게임 클리어!
         if (currentWordIndex >= currentWordList.length) {
-            handleGameEnd(); 
+            handleGameEnd();
             return;
         }
         currentWordToPractice = currentWordList[currentWordIndex];
@@ -101,33 +124,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>발음해보세요!</p>";
         if (elements.recordButton) {
             elements.recordButton.textContent = '🔴 녹음 시작';
-            elements.recordButton.disabled = false; 
+            elements.recordButton.disabled = false;
             elements.recordButton.classList.remove('recording');
         }
-        isCurrentlyRecording = false; 
+        isCurrentlyRecording = false;
         if (currentGameMode === MODE_LEVEL_PRACTICE) {
-            stopWordTimer(); 
-            resetWordTimer(); 
-            startWordTimer(); 
+            stopWordTimer();
+            resetWordTimer();
+            startWordTimer();
         }
     }
-    
+
     function handleWordSuccess() {
-        stopWordTimer(); // 성공했으니 단어 타이머 멈춤!
+        if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer();
         wordsPassedCount++;
         updateScoreBoard();
         currentWordIndex++;
-        if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: green; font-weight: bold;">성공! 🎉 다음 문제로 넘어갑니다!</p>`;
-        if(elements.wordTimerDisplay) elements.wordTimerDisplay.style.color = 'green';
-        if(elements.recordButton) elements.recordButton.disabled = true; // 잠시 버튼 비활성화
-        setTimeout(() => { if (gameIsActive) presentNextWord(); }, 1500); // 1.5초 후 다음 단어
+        if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: green; font-weight: bold;">성공! 🎉</p>`;
+        if (currentGameMode === MODE_LEVEL_PRACTICE && elements.wordTimerDisplay) elements.wordTimerDisplay.style.color = 'green';
+        if(elements.recordButton) elements.recordButton.disabled = true;
+        setTimeout(() => { if (gameIsActive) presentNextWord(); }, 1000);
     }
 
     function handleWordFailure() {
         if (!gameIsActive) return;
-        stopWordTimer();
-        if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red; font-weight: bold;">실패! ⏰</p>`;
-        handleGameEnd(); // 레벨 모드에서는 한번 실패하면 바로 게임 끝!
+        if (currentGameMode === MODE_LEVEL_PRACTICE) {
+            stopWordTimer();
+            if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red; font-weight: bold;">실패! ⏰</p>`;
+            handleGameEnd();
+        } else if (currentGameMode === MODE_SCORE_ATTACK) {
+            currentWordIndex++;
+            if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: orange;">아쉽네요! 다음 문제!</p>`;
+            if(elements.recordButton) elements.recordButton.disabled = true;
+            setTimeout(() => { if (gameIsActive) presentNextWord(); }, 1000);
+        }
     }
 
     function handleGameEnd() {
@@ -135,13 +165,23 @@ document.addEventListener('DOMContentLoaded', () => {
         stopAllTimers();
         if(elements.listenButton) elements.listenButton.disabled = true;
         if(elements.recordButton) elements.recordButton.disabled = true;
-        
-        const isClear = wordsPassedCount === currentWordList.length;
-        if(elements.finalMessage) elements.finalMessage.textContent = isClear ? "🎉 레벨 클리어! 🎉" : "GAME OVER! 😭";
-        if(elements.finalScoreDisplay) elements.finalScoreDisplay.textContent = `총 ${wordsPassedCount}개의 단어를 통과했어요!`;
-        
-        // 아직 랭킹 기능이 없으니, 점수 저장 화면은 숨겨요.
-        if(elements.saveScoreArea) elements.saveScoreArea.style.display = 'none';
+
+        let finalMsg = "", finalScore = "";
+        if (currentGameMode === MODE_LEVEL_PRACTICE) {
+            const isClear = wordsPassedCount === currentWordList.length;
+            finalMsg = isClear ? "🎉 레벨 클리어! 🎉" : "GAME OVER! 😭";
+            finalScore = `총 ${wordsPassedCount}개의 단어를 통과했어요!`;
+            if(elements.saveScoreArea) elements.saveScoreArea.style.display = 'none';
+        } else if (currentGameMode === MODE_SCORE_ATTACK) {
+            finalMsg = "🏆 스코어 어택 종료! 🏆";
+            finalScore = `최종 점수: ${wordsPassedCount}점`;
+            if(elements.saveScoreArea) elements.saveScoreArea.style.display = 'block';
+            if(elements.nicknameInput) elements.nicknameInput.value = "";
+            if(elements.saveScoreButton) { elements.saveScoreButton.disabled = false; elements.saveScoreButton.textContent = '내 기록 저장하기!'; }
+        }
+
+        if(elements.finalMessage) elements.finalMessage.textContent = finalMsg;
+        if(elements.finalScoreDisplay) elements.finalScoreDisplay.textContent = finalScore;
         if(elements.shareResultButton) elements.shareResultButton.style.display = 'inline-block';
         if(elements.restartGameButton) elements.restartGameButton.style.display = 'inline-block';
         if(elements.changeModeButton) elements.changeModeButton.style.display = 'inline-block';
@@ -149,17 +189,64 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen('endGame');
     }
 
+    async function saveScore() {
+        const nickname = elements.nicknameInput.value.trim();
+        if (!nickname || nickname.length > 8) {
+            alert('닉네임은 1~8자로 입력해주세요!'); return;
+        }
+        elements.saveScoreButton.disabled = true;
+        elements.saveScoreButton.textContent = '저장 중...';
+        try {
+            const response = await fetch('/api/scores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname: nickname, score: wordsPassedCount }) });
+            if (!response.ok) throw new Error('점수 저장에 실패했어요.');
+            alert('기록이 저장되었습니다!');
+            await showLeaderboard();
+        } catch (error) {
+            alert(error.message);
+            elements.saveScoreButton.disabled = false;
+            elements.saveScoreButton.textContent = '내 기록 저장하기!';
+        }
+    }
+
+    async function showLeaderboard() {
+        showScreen('leaderboard');
+        if (elements.rankingList) elements.rankingList.innerHTML = '<p>랭킹을 불러오는 중...</p>';
+        try {
+            const response = await fetch('/api/scores');
+            const rankings = await response.json();
+            if (elements.rankingList) {
+                elements.rankingList.innerHTML = '';
+                if (rankings.length === 0) {
+                    elements.rankingList.innerHTML = '<p>아직 등록된 기록이 없어요. 1등에 도전하세요!</p>';
+                } else {
+                    rankings.forEach((rank, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = `🏅 ${index + 1}등: ${rank.nickname} - ${rank.score}점`;
+                        elements.rankingList.appendChild(li);
+                    });
+                }
+            }
+        } catch (error) {
+            if (elements.rankingList) elements.rankingList.innerHTML = '<p>랭킹을 불러오는 데 실패했어요.</p>';
+        }
+    }
+    
     function startGame(mode) {
         currentGameMode = mode;
         gameIsActive = true;
         wordsPassedCount = 0;
         currentWordIndex = 0;
         updateScoreBoard();
-
-        if (elements.wordTimerDisplay && currentGameMode === MODE_LEVEL_PRACTICE) {
-            elements.wordTimerDisplay.style.display = 'block';
+        if (currentGameMode === MODE_TIME_ATTACK) {
+            if (elements.overallTimerDisplay) elements.overallTimerDisplay.style.display = 'block';
+            if (elements.wordTimerDisplay) elements.wordTimerDisplay.style.display = 'none';
+            resetOverallGameTimer();
+            startOverallGameTimer();
+        } else {
+            if (elements.overallTimerDisplay) elements.overallTimerDisplay.style.display = 'none';
+            if (elements.wordTimerDisplay) elements.wordTimerDisplay.style.display = 'block';
+            resetWordTimer();
         }
-
         showScreen('gamePlay');
         if (elements.listenButton) elements.listenButton.disabled = false;
         if (elements.recordButton) elements.recordButton.disabled = false;
@@ -170,11 +257,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function initializeGame() {
         gameIsActive = false;
-        stopAllTimers();
+        stopAllTimers(); // ⭐ 이 함수를 부르려면, 이 함수가 먼저 정의되어 있어야 해요!
+        currentWordIndex = 0;
+        wordsPassedCount = 0;
+        currentGameMode = null;
         currentWordList = [];
         updateScoreBoard();
         if(elements.wordDisplay) elements.wordDisplay.textContent = "게임 모드를 선택해주세요!";
         if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>어떤 모드로 도전할까요?</p>";
+        resetWordTimerDisplay();
+        resetOverallGameTimerDisplay();
+        if (elements.listenButton) elements.listenButton.disabled = true;
+        if (elements.recordButton) {
+            elements.recordButton.disabled = true;
+            elements.recordButton.textContent = '🔴 녹음 시작';
+            elements.recordButton.classList.remove('recording');
+        }
+        if (elements.restartGameButton) elements.restartGameButton.style.display = 'none';
+        if (elements.changeModeButton) elements.changeModeButton.style.display = 'none';
+        if (elements.shareResultButton) elements.shareResultButton.style.display = 'none';
+        if (elements.loadingMessage) elements.loadingMessage.style.display = 'none';
         showScreen('modeSelection');
     }
 
@@ -182,8 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gameIsActive) return;
         if(elements.loadingMessage) elements.loadingMessage.style.display = 'block';
         if(elements.feedbackArea) elements.feedbackArea.innerHTML = "";
-        if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer(); // "잠시만요" 동안 타이머 멈춤
-
+        if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer();
         const mailForm = new FormData();
         mailForm.append('userAudio', voiceAudioBlob, 'my_voice_recording.webm');
         mailForm.append('koreanWord', currentWordToPractice);
@@ -197,97 +298,76 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             if (!gameIsActive) return;
             if(elements.loadingMessage) elements.loadingMessage.style.display = 'none';
+            console.error('서버 통신 오류:', error);
             if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red;">앗! 문제 발생: ${error.message}</p>`;
-            if(elements.recordButton) { elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; }
-            if (currentGameMode === MODE_LEVEL_PRACTICE && wordTimeLeftInSeconds > 0) startWordTimer(); // 오류 시 타이머 다시 시작
+            if(elements.recordButton) { elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording');}
         }
     }
-    
+
     function handleRobotResponse(resultFromServer) {
         if (!gameIsActive) return;
+        if (!resultFromServer.success) {
+            if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red;">${resultFromServer.errorMessage || '결과 못 받음'}</p>`;
+            handleWordFailure();
+            return;
+        }
         const isCorrectAnswer = resultFromServer.feedbackMessage.includes("정확해요!");
         if (isCorrectAnswer) {
             handleWordSuccess();
         } else {
             if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: orange;">${resultFromServer.feedbackMessage}</p>`;
-            handleWordFailure(); // 레벨 모드에서는 틀리면 바로 실패 처리
+            handleWordFailure();
+        }
+    }
+    
+    function loadVoices() {
+        if ('speechSynthesis' in window) {
+            voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); };
+            }
         }
     }
 
-    function loadVoices() { if ('speechSynthesis' in window) { voices = window.speechSynthesis.getVoices(); if (voices.length === 0) { window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices(); }; } } }
-    loadVoices();
-
-    // --- 버튼 누르는 약속(이벤트 리스너) 정하기 ---
-    if (elements.listenButton) {
-        elements.listenButton.addEventListener('click', () => {
-            if (!gameIsActive || !currentWordToPractice) return;
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(currentWordToPractice);
-                utterance.lang = 'ko-KR';
-                utterance.rate = 0.85;
-                let koreanVoice = voices.find(voice => voice.lang === 'ko-KR');
-                if (koreanVoice) utterance.voice = koreanVoice;
-                window.speechSynthesis.speak(utterance);
-            }
-        });
+    function shareGameResult() {
+        if (!elements.finalMessage || !elements.finalScoreDisplay) return;
+        let gameModeText = currentGameMode === MODE_LEVEL_PRACTICE ? "📝 레벨별 발음연습" : "🏆 스코어 어택!";
+        const titleToShare = "✨ 한국어 발음왕 도전! 내 결과 좀 봐! ✨";
+        const textToShare = `모드: ${gameModeText}\n결과: ${elements.finalMessage.textContent}\n${elements.finalScoreDisplay.textContent}\n\n같이 도전해봐! 👇\n#한국어발음왕 #발음챌린지`;
+        const urlToShare = window.location.href;
+        const shareData = { title: titleToShare, text: textToShare, url: urlToShare };
+        if (navigator.share) {
+            try { navigator.share(shareData); }
+            catch (err) { copyToClipboardFallback(titleToShare + "\n" + textToShare + "\n" + urlToShare); }
+        } else {
+            copyToClipboardFallback(titleToShare + "\n" + textToShare + "\n" + urlToShare);
+        }
     }
 
-    if (elements.recordButton) {
-        elements.recordButton.addEventListener('click', async () => {
-            if (elements.recordButton.disabled || !gameIsActive) return;
-            if (currentGameMode === MODE_LEVEL_PRACTICE && wordTimeLeftInSeconds <= 0) return;
-            if (!isCurrentlyRecording) {
-                try {
-                    currentAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorderTool = new MediaRecorder(currentAudioStream, { mimeType: 'audio/webm;codecs=opus' });
-                    recordedAudioChunks = [];
-                    mediaRecorderTool.addEventListener('dataavailable', event => { if (event.data.size > 0) recordedAudioChunks.push(event.data); });
-                    mediaRecorderTool.addEventListener('stop', () => {
-                        if (currentAudioStream) { currentAudioStream.getTracks().forEach(track => track.stop()); currentAudioStream = null; }
-                        const completeAudioBlob = new Blob(recordedAudioChunks, { type: mediaRecorderTool.mimeType });
-                        if (gameIsActive && completeAudioBlob.size > 0) sendVoiceToRobotForGrading(completeAudioBlob);
-                        else if (gameIsActive && completeAudioBlob.size === 0) {
-                            if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>앗! 녹음된 목소리가 없어요.</p>";
-                            elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording');
-                            isCurrentlyRecording = false;
-                            if (currentGameMode === MODE_LEVEL_PRACTICE) startWordTimer();
-                        }
-                    });
-                    mediaRecorderTool.start();
-                    elements.recordButton.textContent = '⏹️ 녹음 중지'; elements.recordButton.classList.add('recording');
-                    if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>지금 말해보세요...🎙️</p>";
-                    isCurrentlyRecording = true;
-                } catch (error) {
-                    alert("마이크 사용 불가! 😭");
-                    isCurrentlyRecording = false;
-                }
-            } else {
-                if (mediaRecorderTool && mediaRecorderTool.state === 'recording') {
-                    isCurrentlyRecording = false; 
-                    mediaRecorderTool.stop();
-                }
-                elements.recordButton.textContent = '잠시만요...'; elements.recordButton.disabled = true; 
-            }
-        });
+    function copyToClipboardFallback(textToCopy) {
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => alert("게임 결과가 복사되었어요! SNS에 붙여넣고 자랑해보세요! 📋🎉"))
+            .catch(() => alert("앗! 결과 복사에 실패했어요. 😥"));
     }
 
-    // 메인 화면 버튼들
-    if (elements.startLevelPracticeButton) elements.startLevelPracticeButton.addEventListener('click', () => { showScreen('levelSelection'); });
-    if (elements.startScoreAttackButton) elements.startScoreAttackButton.addEventListener('click', () => { alert("스코어 어택 모드는 다음 단계에서 만들 거예요!"); });
-    if (elements.showRankingButton) elements.showRankingButton.addEventListener('click', () => { alert("랭킹 기능은 다음 단계에서 만들 거예요!"); });
+    // --- 🚀 4단계: 페이지 로드 시 버튼 이벤트 리스너 연결 및 게임 초기화 ---
     
-    // 레벨 선택 화면 버튼들
+    loadVoices(); // 소리 듣기 목소리 미리 불러오기
+    
+    if (elements.startLevelPracticeButton) elements.startLevelPracticeButton.addEventListener('click', () => { showScreen('levelSelection'); });
+    if (elements.startScoreAttackButton) elements.startScoreAttackButton.addEventListener('click', () => { currentGameMode = MODE_SCORE_ATTACK; currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3].sort(() => Math.random() - 0.5); startGame(MODE_SCORE_ATTACK); });
+    if (elements.showRankingButton) elements.showRankingButton.addEventListener('click', showLeaderboard);
     if (elements.startLevel1Button) elements.startLevel1Button.addEventListener('click', () => { currentWordList = wordLevels.level1; startGame(MODE_LEVEL_PRACTICE); });
     if (elements.startLevel2Button) elements.startLevel2Button.addEventListener('click', () => { currentWordList = wordLevels.level2; startGame(MODE_LEVEL_PRACTICE); });
     if (elements.startLevel3Button) elements.startLevel3Button.addEventListener('click', () => { currentWordList = wordLevels.level3; startGame(MODE_LEVEL_PRACTICE); });
     if (elements.backToModeButton) elements.backToModeButton.addEventListener('click', () => showScreen('modeSelection'));
-    
-    // 게임 종료 화면 버튼들
-    if (elements.restartGameButton) elements.restartGameButton.addEventListener('click', () => { if(currentGameMode) startGame(currentGameMode); else initializeGame(); });
+    if (elements.backToModeFromRankingButton) elements.backToModeFromRankingButton.addEventListener('click', () => showScreen('modeSelection'));
+    if (elements.restartGameButton) elements.restartGameButton.addEventListener('click', () => { if(currentGameMode) { if(currentGameMode === MODE_SCORE_ATTACK) { currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3].sort(() => Math.random() - 0.5); } startGame(currentGameMode); } else { initializeGame(); } });
     if (elements.changeModeButton) elements.changeModeButton.addEventListener('click', () => initializeGame());
-    if (elements.shareResultButton) elements.shareResultButton.addEventListener('click', () => alert("공유 기능은 다음 단계에 만들 거예요!"));
+    if (elements.shareResultButton) elements.shareResultButton.addEventListener('click', shareGameResult);
+    if (elements.saveScoreButton) elements.saveScoreButton.addEventListener('click', saveScore);
+    if (elements.listenButton) { elements.listenButton.addEventListener('click', () => { if (!gameIsActive || !currentWordToPractice) return; if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(currentWordToPractice); utterance.lang = 'ko-KR'; utterance.rate = 0.85; utterance.pitch = 1; let koreanVoice = voices.find(voice => voice.lang === 'ko-KR'); if (koreanVoice) utterance.voice = koreanVoice; window.speechSynthesis.speak(utterance); } }); }
+    if (elements.recordButton) { elements.recordButton.addEventListener('click', async () => { if (elements.recordButton.disabled || !gameIsActive) return; let timeIsUp = (currentGameMode === MODE_LEVEL_PRACTICE && wordTimeLeftInSeconds <= 0) || (currentGameMode === MODE_SCORE_ATTACK && overallGameTimeLeftInSeconds <= 0); if (timeIsUp) return; if (!isCurrentlyRecording) { try { currentAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorderTool = new MediaRecorder(currentAudioStream, { mimeType: 'audio/webm;codecs=opus' }); recordedAudioChunks = []; mediaRecorderTool.addEventListener('dataavailable', event => { if (event.data.size > 0) recordedAudioChunks.push(event.data); }); mediaRecorderTool.addEventListener('stop', () => { if (currentAudioStream) { currentAudioStream.getTracks().forEach(track => track.stop()); currentAudioStream = null; } const completeAudioBlob = new Blob(recordedAudioChunks, { type: mediaRecorderTool.mimeType }); if (gameIsActive && completeAudioBlob.size > 0) { sendVoiceToRobotForGrading(completeAudioBlob); } else if (gameIsActive && completeAudioBlob.size === 0) { if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>앗! 녹음된 목소리가 없어요.</p>"; elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording'); isCurrentlyRecording = false; if (currentGameMode === MODE_LEVEL_PRACTICE) startWordTimer(); } }); mediaRecorderTool.start(); elements.recordButton.textContent = '⏹️ 녹음 중지'; elements.recordButton.classList.add('recording'); if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>지금 말해보세요...🎙️</p>"; isCurrentlyRecording = true; } catch (error) { console.error("마이크 오류:", error); alert("마이크 사용 불가!"); if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>마이크 사용 불가 😭</p>"; elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.classList.remove('recording'); isCurrentlyRecording = false;} } else { if (mediaRecorderTool && mediaRecorderTool.state === 'recording') { if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer(); isCurrentlyRecording = false; mediaRecorderTool.stop(); } elements.recordButton.textContent = '잠시만요...'; elements.recordButton.disabled = true; } }); }
     
-    // 페이지 처음 열릴 때 게임 초기화
     initializeGame();
 });
