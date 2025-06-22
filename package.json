@@ -1,7 +1,7 @@
 {
   "name": "korean-pronunciation-final-version",
   "version": "1.0.0",
-  "description": "The absolutely final, working version of the Korean Pronunciation Game.",
+  "description": "The final complete version of the Korean Pronunciation Game.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
