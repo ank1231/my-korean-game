@@ -9,7 +9,6 @@ const port = process.env.PORT || 3000;
 
 let pool;
 let dbInitializationError = null;
-
 if (process.env.DATABASE_URL) {
     pool = new Pool({
         connectionString: process.env.DATABASE_URL,
@@ -47,19 +46,23 @@ try {
     googleSpeechClient = new SpeechClient({ credentials });
     console.log("✅ 구글 똑똑한 귀 준비 완료!");
 } catch (e) {
-    console.error("🚨🚨🚨 구글 똑똑한 귀 준비 실패! 🚨🚨🚨");
-    console.error(e.message);
+    console.error("🚨 구글 똑똑한 귀 준비 실패:", e.message);
     googleInitializationError = e;
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
 const multerStorage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage: multerStorage });
 
 app.post('/assess-my-voice', async (req, res) => {
-    if (googleInitializationError || !googleSpeechClient) return res.status(500).json({ success: false, errorMessage: '서버 문제로 음성 평가를 할 수 없어요.' });
-    if (!req.file || !req.body.koreanWord) return res.status(400).json({ success: false, errorMessage: '필요한 정보가 부족해요.' });
+    if (googleInitializationError || !googleSpeechClient) {
+        return res.status(500).json({ success: false, errorMessage: '서버 문제로 음성 평가를 할 수 없어요.' });
+    }
+    if (!req.file || !req.body.koreanWord) {
+        return res.status(400).json({ success: false, errorMessage: '필요한 정보가 부족해요.' });
+    }
     const practiceWord = req.body.koreanWord; 
     const audioFileBytes = req.file.buffer.toString('base64'); 
     const audioRequestConfig = { encoding: 'WEBM_OPUS', languageCode: 'ko-KR', model: 'latest_long' };
@@ -69,7 +72,7 @@ app.post('/assess-my-voice', async (req, res) => {
         let recognizedText = ""; 
         let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥"; 
         if (googleResponse.results && googleResponse.results.length > 0 && googleResponse.results[0].alternatives[0] && googleResponse.results[0].alternatives[0].transcript) {
-            recognizedText = googleResponse.results[0].alternatives[0].transcript; 
+            recognizedText = googleResponse.results[0].alternatives[0].transcript;
             const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
             const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
             if (recognizedTextCleaned === practiceWordCleaned) {
