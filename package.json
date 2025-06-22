@@ -1,7 +1,7 @@
 {
-  "name": "render-korean-game-with-ranking",
+  "name": "korean-pronunciation-final",
   "version": "1.0.0",
-  "description": "My Korean pronunciation game with a leaderboard.",
+  "description": "The final complete version of the Korean Pronunciation Game.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
