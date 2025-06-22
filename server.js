@@ -32,7 +32,6 @@ if (process.env.DATABASE_URL) {
         }
     };
     createTable();
-    console.log("✅ 데이터베이스 연결 준비 완료!");
 } else {
     dbInitializationError = new Error("데이터베이스 주소(DATABASE_URL)를 찾을 수 없어요!");
     console.error(`🚨 ${dbInitializationError.message}`);
@@ -48,7 +47,8 @@ try {
     googleSpeechClient = new SpeechClient({ credentials });
     console.log("✅ 구글 똑똑한 귀 준비 완료!");
 } catch (e) {
-    console.error("🚨 구글 똑똑한 귀 준비 실패:", e.message);
+    console.error("🚨🚨🚨 구글 똑똑한 귀 준비 실패! 🚨🚨🚨");
+    console.error(e.message);
     googleInitializationError = e;
 }
 
@@ -58,12 +58,8 @@ const multerStorage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage: multerStorage });
 
 app.post('/assess-my-voice', async (req, res) => {
-    if (googleInitializationError || !googleSpeechClient) {
-        return res.status(500).json({ success: false, errorMessage: '서버 문제로 음성 평가를 할 수 없어요.' });
-    }
-    if (!req.file || !req.body.koreanWord) {
-        return res.status(400).json({ success: false, errorMessage: '필요한 정보가 부족해요.' });
-    }
+    if (googleInitializationError || !googleSpeechClient) return res.status(500).json({ success: false, errorMessage: '서버 문제로 음성 평가를 할 수 없어요.' });
+    if (!req.file || !req.body.koreanWord) return res.status(400).json({ success: false, errorMessage: '필요한 정보가 부족해요.' });
     const practiceWord = req.body.koreanWord; 
     const audioFileBytes = req.file.buffer.toString('base64'); 
     const audioRequestConfig = { encoding: 'WEBM_OPUS', languageCode: 'ko-KR', model: 'latest_long' };
@@ -73,13 +69,13 @@ app.post('/assess-my-voice', async (req, res) => {
         let recognizedText = ""; 
         let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥"; 
         if (googleResponse.results && googleResponse.results.length > 0 && googleResponse.results[0].alternatives[0] && googleResponse.results[0].alternatives[0].transcript) {
-            recognizedText = googleResponse.results[0].alternatives[0].transcript;
+            recognizedText = googleResponse.results[0].alternatives[0].transcript; 
             const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
             const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
             if (recognizedTextCleaned === practiceWordCleaned) {
-                feedbackMessageToUser = `정확해요! 👍 컴퓨터가 원래 단어("${practiceWord}")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "${recognizedText}")`;
+                feedbackMessageToUser = `정확해요! 👍 (컴퓨터가 들은 말: "${recognizedText}")`;
             } else {
-                feedbackMessageToUser = `음... 컴퓨터는 "${recognizedText}" 라고 알아들었대요. 원래 단어는 "${practiceWord}" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기/부호는 괜찮아요!)`;
+                feedbackMessageToUser = `음... 컴퓨터는 "${recognizedText}" 라고 알아들었대요. 정답은 "${practiceWord}" 인데...`;
             }
             res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
         } else {
