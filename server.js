@@ -1,123 +1,102 @@
+// server.js - Render 전용! (문장 부호 무시 기능 추가 최종판!)
 const express = require('express');
 const { SpeechClient } = require('@google-cloud/speech');
 const multer = require('multer');
 const path = require('path');
-const { Pool } = require('pg');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-let pool;
-let dbInitializationError = null;
-if (process.env.DATABASE_URL) {
-    pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-    });
-    const createTable = async () => {
-        try {
-            await pool.query(`
-                CREATE TABLE IF NOT EXISTS scores (
-                    id SERIAL PRIMARY KEY,
-                    nickname VARCHAR(50) NOT NULL,
-                    score INT NOT NULL,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            `);
-            console.log("✅ 'scores' 테이블이 성공적으로 준비되었습니다.");
-        } catch (err) {
-            console.error("🚨 'scores' 테이블 만드는 중 오류 발생:", err);
-            dbInitializationError = err;
-        }
-    };
-    createTable();
-} else {
-    dbInitializationError = new Error("데이터베이스 주소(DATABASE_URL)를 찾을 수 없어요!");
-    console.error(`🚨 ${dbInitializationError.message}`);
-}
+// ⭐ 어떤 손님이든(어떤 출처든) 우리 가게에 들어올 수 있게 문을 활짝 열어주세요!
+app.use(cors());
 
 let googleSpeechClient;
-let googleInitializationError = null;
+let initializationError = null;
+
+// --- Render를 위한 구글 클라이언트 준비! ---
+console.log("--- Render 전용 구글 클라이언트 초기화를 시작합니다 ---");
 try {
     if (!process.env.GOOGLE_CREDENTIALS_JSON_CONTENT) {
         throw new Error("Render 비밀금고에 GOOGLE_CREDENTIALS_JSON_CONTENT 변수가 설정되지 않았습니다!");
     }
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON_CONTENT);
     googleSpeechClient = new SpeechClient({ credentials });
-    console.log("✅ 구글 똑똑한 귀 준비 완료!");
+    console.log("✅ 성공! Render 비밀금고에서 비밀 열쇠를 찾아서 구글 똑똑한 귀를 준비했어요!");
 } catch (e) {
-    console.error("🚨 구글 똑똑한 귀 준비 실패:", e.message);
-    googleInitializationError = e;
+    console.error("🚨🚨🚨 치명적 오류! 구글 똑똑한 귀 준비 실패! 🚨🚨🚨");
+    console.error(e.message);
+    initializationError = e;
 }
+console.log("--- 구글 클라이언트 초기화 끝 ---");
 
+
+// 'public' 폴더에 있는 파일들을 손님에게 보여주세요!
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
+    
+// 목소리 녹음 파일을 컴퓨터 메모리에 잠깐 저장하도록 설정
 const multerStorage = multer.memoryStorage();
 const uploadMiddleware = multer({ storage: multerStorage });
 
-app.post('/assess-my-voice', async (req, res) => {
-    if (googleInitializationError || !googleSpeechClient) {
-        return res.status(500).json({ success: false, errorMessage: '서버 문제로 음성 평가를 할 수 없어요.' });
+// API 라우트
+app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, res) => {
+    if (initializationError || !googleSpeechClient) {
+        console.error("음성 평가 요청이 왔지만, 구글 클라이언트가 준비되지 않아서 처리할 수 없어요!");
+        return res.status(500).json({ success: false, errorMessage: '서버에 문제가 생겨서 음성 평가를 할 수 없어요. 관리자에게 문의해주세요!' });
     }
-    if (!req.file || !req.body.koreanWord) {
-        return res.status(400).json({ success: false, errorMessage: '필요한 정보가 부족해요.' });
-    }
+    if (!req.file) return res.status(400).json({ success: false, errorMessage: '목소리 녹음 파일이 없어요!' });
+    if (!req.body.koreanWord) return res.status(400).json({ success: false, errorMessage: '연습할 한국어 단어가 없어요!' });
+        
     const practiceWord = req.body.koreanWord; 
     const audioFileBytes = req.file.buffer.toString('base64'); 
-    const audioRequestConfig = { encoding: 'WEBM_OPUS', languageCode: 'ko-KR', model: 'latest_long' };
-    const requestToGoogle = { audio: { content: audioFileBytes }, config: audioRequestConfig };
+
+    const audioRequestConfig = {
+        encoding: 'WEBM_OPUS',        
+        languageCode: 'ko-KR',        
+        model: 'latest_long',         
+    };
+    const audioDataForGoogle = { content: audioFileBytes };
+    const requestToGoogle = { audio: audioDataForGoogle, config: audioRequestConfig };
+
     try {
         const [googleResponse] = await googleSpeechClient.recognize(requestToGoogle);
         let recognizedText = ""; 
-        let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥"; 
-        if (googleResponse.results && googleResponse.results.length > 0 && googleResponse.results[0].alternatives[0] && googleResponse.results[0].alternatives[0].transcript) {
-            recognizedText = googleResponse.results[0].alternatives[0].transcript;
+        let feedbackMessageToUser = "앗! 컴퓨터가 무슨 말인지 잘 못 알아들었어요. 😥 다시 해볼까요?"; 
+
+        if (googleResponse.results && googleResponse.results.length > 0 && googleResponse.results[0].alternatives && googleResponse.results[0].alternatives.length > 0 && googleResponse.results[0].alternatives[0].transcript) {
+            recognizedText = googleResponse.results[0].alternatives[0].transcript; 
+            console.log(`컴퓨터가 알아들은 단어는 바로: "${recognizedText}"`);
+
+            // ⭐⭐⭐ 여기가 바로 바뀐 부분이에요! 문장 부호까지 없애는 더 강력한 마법! ⭐⭐⭐
+            // 정규식 /[.,?!]/g 는 글자 중에서 온점, 쉼표, 물음표, 느낌표를 찾아서 없애라는 뜻이에요.
             const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
             const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
+
+            console.log(`[비교] 원래 단어 (부호/공백 제거): "${practiceWordCleaned}"`);
+            console.log(`[비교] 알아들은 단어 (부호/공백 제거): "${recognizedTextCleaned}"`);
+
             if (recognizedTextCleaned === practiceWordCleaned) {
-                feedbackMessageToUser = `정확해요! 👍 (컴퓨터가 들은 말: "${recognizedText}")`;
+                feedbackMessageToUser = '정확해요! 👍 컴퓨터가 원래 단어("' + practiceWord + '")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "' + recognizedText + '")';
             } else {
-                feedbackMessageToUser = `음... 컴퓨터는 "${recognizedText}" 라고 알아들었대요. 정답은 "${practiceWord}" 인데...`;
+                feedbackMessageToUser = '음... 컴퓨터는 "' + recognizedText + '" 라고 알아들었대요. 원래 단어는 "' + practiceWord + '" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기/부호는 괜찮아요!)';
             }
+            
             res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
         } else {
             res.status(400).json({ success: false, errorMessage: feedbackMessageToUser });
         }
     } catch (error) { 
-        console.error('API 호출 중 문제 발생:', error);
-        res.status(500).json({ success: false, errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요.' });
+        console.error('일꾼 로봇이 아파요! (API 호출 중 문제 발생):', error);
+        res.status(500).json({ success: false, errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요. 잠시 후 다시 시도해주세요!' });
     }
 });
 
-app.get('/api/scores', async (req, res) => {
-    if (dbInitializationError || !pool) return res.status(500).json({ error: '데이터베이스에 연결할 수 없어요.' });
-    try {
-        const result = await pool.query('SELECT nickname, score FROM scores ORDER BY score DESC, created_at ASC LIMIT 10');
-        res.json(result.rows);
-    } catch (err) {
-        console.error('랭킹 데이터 불러오기 오류:', err);
-        res.status(500).json({ error: '랭킹을 불러오는 데 실패했어요.' });
-    }
-});
-
-app.post('/api/scores', async (req, res) => {
-    if (dbInitializationError || !pool) return res.status(500).json({ error: '데이터베이스에 연결할 수 없어요.' });
-    const { nickname, score } = req.body;
-    if (!nickname || score === undefined) {
-        return res.status(400).json({ error: '닉네임과 점수가 모두 필요해요.' });
-    }
-    try {
-        const result = await pool.query('INSERT INTO scores(nickname, score) VALUES($1, $2) RETURNING *', [nickname.slice(0, 50), score]);
-        res.status(201).json(result.rows[0]);
-    } catch (err) {
-        console.error('점수 저장 오류:', err);
-        res.status(500).json({ error: '점수를 저장하는 데 실패했어요.' });
-    }
-});
-
+// 일꾼 로봇아, 이제부터 손님을 기다려!
 app.listen(port, () => {
     console.log(`🚀 얏호! 우리 게임 서버가 ${port}번 문에서 출발했어요! 🚀`);
-    if (googleInitializationError) console.log("🚨 하지만, 구글 똑똑한 귀 준비에 실패해서 발음 평가는 안 될 거예요!");
-    if (dbInitializationError) console.log("🚨 하지만, 데이터베이스 준비에 실패해서 랭킹 기능은 안 될 거예요!");
+    if (initializationError) {
+        console.log("🚨 하지만, 구글 똑똑한 귀 준비에 실패해서 발음 평가는 안 될 거예요!");
+    } else {
+        console.log("🤫 Render 비밀금고에 있는 비밀 열쇠를 사용하고 있어요!");
+    }
 });
