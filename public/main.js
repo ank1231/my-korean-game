@@ -1,14 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // (이전과 모든 코드는 동일하지만, sendVoiceToRobotForGrading 함수 하나만 바뀝니다!)
-    // (아래에 전체 코드를 다시 넣어드릴게요!)
-    const elements = { /* 이전과 동일 */ wordDisplay: document.getElementById('word-to-practice'), listenButton: document.getElementById('listen-button'), recordButton: document.getElementById('record-button'), feedbackArea: document.getElementById('my-feedback'), loadingMessage: document.getElementById('loading-message'), wordTimerDisplay: document.getElementById('timer-display'), overallTimerDisplay: document.getElementById('overall-timer-display'), scoreBoard: document.getElementById('score-board'), modeSelectionArea: document.getElementById('mode-selection-area'), levelSelectionArea: document.getElementById('level-selection-area'), gamePlayArea: document.getElementById('game-play-area'), endGameArea: document.getElementById('end-game-area'), leaderboardArea: document.getElementById('leaderboard-area'), saveScoreArea: document.getElementById('save-score-area'), startLevelPracticeButton: document.getElementById('start-level-practice-btn'), startScoreAttackButton: document.getElementById('start-score-attack-btn'), showRankingButton: document.getElementById('show-ranking-btn'), startLevel1Button: document.getElementById('start-level-1-btn'), startLevel2Button: document.getElementById('start-level-2-btn'), startLevel3Button: document.getElementById('start-level-3-btn'), backToModeButton: document.getElementById('back-to-mode-btn'), backToModeFromRankingButton: document.getElementById('back-to-mode-from-ranking-btn'), restartGameButton: document.getElementById('restart-game-btn'), changeModeButton: document.getElementById('change-mode-btn'), finalMessage: document.getElementById('final-message'), finalScoreDisplay: document.getElementById('final-score-display'), shareResultButton: document.getElementById('share-result-btn'), nicknameInput: document.getElementById('nickname-input'), saveScoreButton: document.getElementById('save-score-btn'), rankingList: document.getElementById('ranking-list') };
-    const wordLevels = { /* 이전과 동일 */ level1: ["안녕하세요", "감사합니다", "이거 얼마예요?", "화장실 어디예요?", "닭갈비", "진짜 예쁘다", "다시 한번 말해주세요."], level2: ["민주주의의 의의", "책을 읊조리다", "흙을 밟다", "고려고 교복은 고급 교복이다.", "백화점 세일 마지막 날이라서 사람이 많아요.", "앞 집 팥죽은 붉은 팥 풋팥죽이다.", "저는 대한민국 서울특별시에 살고 있습니다."], level3: ["간장 공장 공장장은 강 공장장이고 된장 공장 공장장은 공 공장장이다.", "경찰청 철창살은 외철창살이냐 쌍철창살이냐.", "내가 그린 기린 그림은 잘 그린 기린 그림이다.", "한영양장점 옆 한양양장점.", "서울특별시 특허허가과 허가과장 허과장.", "저기 저 뜀틀이 내가 뛸 뜀틀인가 내가 안 뛸 뜀틀인가.", "챠프포프킨과 치스챠코프는 라흐마니노프의 피아노 콘체르토를 연주했다."] };
-    const MODE_LEVEL_PRACTICE = 'LEVEL_PRACTICE'; const MODE_SCORE_ATTACK = 'SCORE_ATTACK';
-    let currentGameMode = null; let currentWordList = []; let currentWordToPractice = ""; let currentWordIndex = 0; let wordsPassedCount = 0; let gameIsActive = false;
+    // 모든 HTML 요소를 elements 라는 큰 상자에 먼저 담아둡니다.
+    const elements = {
+        wordDisplay: document.getElementById('word-to-practice'), listenButton: document.getElementById('listen-button'),
+        recordButton: document.getElementById('record-button'), feedbackArea: document.getElementById('my-feedback'),
+        loadingMessage: document.getElementById('loading-message'), wordTimerDisplay: document.getElementById('timer-display'),
+        overallTimerDisplay: document.getElementById('overall-timer-display'), scoreBoard: document.getElementById('score-board'),
+        modeSelectionArea: document.getElementById('mode-selection-area'), levelSelectionArea: document.getElementById('level-selection-area'),
+        gamePlayArea: document.getElementById('game-play-area'), endGameArea: document.getElementById('end-game-area'),
+        leaderboardArea: document.getElementById('leaderboard-area'), saveScoreArea: document.getElementById('save-score-area'),
+        startLevelPracticeButton: document.getElementById('start-level-practice-btn'), startScoreAttackButton: document.getElementById('start-score-attack-btn'),
+        showRankingButton: document.getElementById('show-ranking-btn'), startLevel1Button: document.getElementById('start-level-1-btn'),
+        startLevel2Button: document.getElementById('start-level-2-btn'), startLevel3Button: document.getElementById('start-level-3-btn'),
+        backToModeButton: document.getElementById('back-to-mode-btn'), backToModeFromRankingButton: document.getElementById('back-to-mode-from-ranking-btn'),
+        restartGameButton: document.getElementById('restart-game-btn'), changeModeButton: document.getElementById('change-mode-btn'),
+        finalMessage: document.getElementById('final-message'), finalScoreDisplay: document.getElementById('final-score-display'),
+        shareResultButton: document.getElementById('share-result-btn'), nicknameInput: document.getElementById('nickname-input'),
+        saveScoreButton: document.getElementById('save-score-btn'), rankingList: document.getElementById('ranking-list')
+    };
+
+    // 게임 기본 재료들
+    const wordLevels = {
+        level1: ["안녕하세요", "감사합니다", "이거 얼마예요?", "화장실 어디예요?", "닭갈비", "진짜 예쁘다", "다시 한번 말해주세요."],
+        level2: ["민주주의의 의의", "책을 읊조리다", "흙을 밟다", "고려고 교복은 고급 교복이다.", "백화점 세일 마지막 날이라서 사람이 많아요.", "앞 집 팥죽은 붉은 팥 풋팥죽이다.", "저는 대한민국 서울특별시에 살고 있습니다."],
+        level3: ["간장 공장 공장장은 강 공장장이고 된장 공장 공장장은 공 공장장이다.", "경찰청 철창살은 외철창살이냐 쌍철창살이냐.", "내가 그린 기린 그림은 잘 그린 기린 그림이다.", "한영양장점 옆 한양양장점.", "서울특별시 특허허가과 허가과장 허과장.", "저기 저 뜀틀이 내가 뛸 뜀틀인가 내가 안 뛸 뜀틀인가.", "챠프포프킨과 치스챠코프는 라흐마니노프의 피아노 콘체르토를 연주했다."]
+    };
+    const MODE_LEVEL_PRACTICE = 'LEVEL_PRACTICE';
+    const MODE_SCORE_ATTACK = 'SCORE_ATTACK';
+    let currentGameMode = null; let currentWordList = [];
+    let currentWordToPractice = ""; let currentWordIndex = 0; let wordsPassedCount = 0; let gameIsActive = false;
     let mediaRecorderTool; let recordedAudioChunks = []; let isCurrentlyRecording = false; let currentAudioStream = null;
     const WORD_TIMER_SECONDS = 15; let wordTimeLeftInSeconds = WORD_TIMER_SECONDS; let wordTimerInterval;
     const OVERALL_GAME_SECONDS = 60; let overallGameTimeLeftInSeconds = OVERALL_GAME_SECONDS; let overallGameTimerInterval;
     let voices = [];
+    
+    // --- 모든 마법 주문(함수)들을 미리 다 정의하기! ---
     function showScreen(screenToShow) { if (elements.modeSelectionArea) elements.modeSelectionArea.style.display = 'none'; if (elements.levelSelectionArea) elements.levelSelectionArea.style.display = 'none'; if (elements.gamePlayArea) elements.gamePlayArea.style.display = 'none'; if (elements.endGameArea) elements.endGameArea.style.display = 'none'; if(elements.leaderboardArea) elements.leaderboardArea.style.display = 'none'; if (elements[screenToShow + 'Area']) elements[screenToShow + 'Area'].style.display = 'block'; }
     function updateScoreBoard() { if(!elements.scoreBoard) return; if (currentGameMode === MODE_SCORE_ATTACK) { elements.scoreBoard.textContent = `현재 점수: ${wordsPassedCount}점`; } else if (currentGameMode === MODE_LEVEL_PRACTICE) { elements.scoreBoard.textContent = `통과: ${wordsPassedCount}개 / 총 ${currentWordList.length}개`; } else { elements.scoreBoard.textContent = '점수'; } }
     function stopAllTimers() { clearInterval(wordTimerInterval); clearInterval(overallGameTimerInterval); }
@@ -27,50 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function showLeaderboard() { showScreen('leaderboard'); if (elements.rankingList) elements.rankingList.innerHTML = '<p>랭킹을 불러오는 중...</p>'; try { const response = await fetch('/api/scores'); const rankings = await response.json(); if (elements.rankingList) { elements.rankingList.innerHTML = ''; if (rankings.length === 0) { elements.rankingList.innerHTML = '<p>아직 등록된 기록이 없어요. 1등에 도전하세요!</p>'; } else { rankings.forEach((rank, index) => { const li = document.createElement('li'); const medal = ['🥇', '🥈', '🥉'][index] || '🏅'; li.innerHTML = `${medal} ${index + 1}등: <span class="nickname">${rank.nickname}</span><span class="score">${rank.score}점</span>`; elements.rankingList.appendChild(li); }); } } } catch (error) { if (elements.rankingList) elements.rankingList.innerHTML = '<p>랭킹을 불러오는 데 실패했어요.</p>'; } }
     function startGame(mode) { currentGameMode = mode; gameIsActive = true; wordsPassedCount = 0; currentWordIndex = 0; updateScoreBoard(); if (currentGameMode === MODE_SCORE_ATTACK) { if (elements.overallTimerDisplay) elements.overallTimerDisplay.style.display = 'block'; if (elements.wordTimerDisplay) elements.wordTimerDisplay.style.display = 'none'; resetOverallGameTimer(); startOverallGameTimer(); } else { if (elements.overallTimerDisplay) elements.overallTimerDisplay.style.display = 'none'; if (elements.wordTimerDisplay) elements.wordTimerDisplay.style.display = 'block'; resetWordTimer(); } showScreen('gamePlay'); if (elements.listenButton) elements.listenButton.disabled = false; if (elements.recordButton) elements.recordButton.disabled = false; isCurrentlyRecording = false; if(elements.loadingMessage) elements.loadingMessage.style.display = 'none'; presentNextWord(); }
     function initializeGame() { gameIsActive = false; stopAllTimers(); currentWordIndex = 0; wordsPassedCount = 0; currentGameMode = null; currentWordList = []; updateScoreBoard(); if(elements.wordDisplay) elements.wordDisplay.textContent = "게임 모드를 선택해주세요!"; if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>어떤 모드로 도전할까요?</p>"; resetWordTimerDisplay(); resetOverallGameTimerDisplay(); if (elements.listenButton) elements.listenButton.disabled = true; if (elements.recordButton) { elements.recordButton.disabled = true; elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.classList.remove('recording');} if (elements.restartGameButton) elements.restartGameButton.style.display = 'none'; if (elements.changeModeButton) elements.changeModeButton.style.display = 'none'; if (elements.shareResultButton) elements.shareResultButton.style.display = 'none'; if (elements.loadingMessage) elements.loadingMessage.style.display = 'none'; showScreen('modeSelection'); }
-    
-    // ⭐⭐⭐ 여기가 바로 바뀐 부분이에요! 목소리를 JSON 편지 봉투에 담아 보내요! ⭐⭐⭐
-    async function sendVoiceToRobotForGrading(voiceAudioBlob) {
-        if (!gameIsActive) return;
-        if(elements.loadingMessage) elements.loadingMessage.style.display = 'block';
-        if(elements.feedbackArea) elements.feedbackArea.innerHTML = "";
-        if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer();
-
-        // 1. 목소리 파일을 Base64 라는 긴 글자로 변신시키는 마법!
-        const reader = new FileReader();
-        reader.readAsDataURL(voiceAudioBlob);
-        reader.onloadend = async function() {
-            const base64AudioWithPrefix = reader.result;
-            // 순수한 Base64 데이터만 추출 (앞부분 'data:audio/webm;codecs=opus;base64,' 같은 거 제거)
-            const pureBase64Audio = base64AudioWithPrefix.split(',')[1];
-            
-            // 2. 일꾼 로봇에게 보낼 데이터 꾸러미(JSON) 만들기
-            const dataToSend = {
-                audioData_base64: pureBase64Audio,
-                koreanWord: currentWordToPractice
-            };
-
-            try {
-                // 3. Netlify에 있는 새 일꾼 로봇 주소로 요청 보내기!
-                const responseFromServer = await fetch('/assess-my-voice', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSend)
-                });
-                if(elements.loadingMessage) elements.loadingMessage.style.display = 'none';
-                if (!gameIsActive) return;
-                const resultFromServer = await responseFromServer.json();
-                if (!responseFromServer.ok) throw new Error(resultFromServer.errorMessage || '로봇 응답 이상');
-                handleRobotResponse(resultFromServer);
-            } catch (error) {
-                if (!gameIsActive) return;
-                if(elements.loadingMessage) elements.loadingMessage.style.display = 'none'; 
-                console.error('서버 통신 오류:', error);
-                if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red;">앗! 문제 발생: ${error.message}</p>`;
-                if(elements.recordButton) { elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording');}
-            }
-        } // reader.onloadend 끝
-    }
-
+    async function sendVoiceToRobotForGrading(voiceAudioBlob) { if (!gameIsActive) return; if(elements.loadingMessage) elements.loadingMessage.style.display = 'block'; if(elements.feedbackArea) elements.feedbackArea.innerHTML = ""; if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer(); const mailForm = new FormData(); mailForm.append('userAudio', voiceAudioBlob, 'my_voice_recording.webm'); mailForm.append('koreanWord', currentWordToPractice); try { const responseFromServer = await fetch('/assess-my-voice', { method: 'POST', body: mailForm }); if(elements.loadingMessage) elements.loadingMessage.style.display = 'none'; if (!gameIsActive) return; const resultFromServer = await responseFromServer.json(); if (!responseFromServer.ok) throw new Error(resultFromServer.errorMessage || '로봇 응답 이상'); handleRobotResponse(resultFromServer); } catch (error) { if (!gameIsActive) return; if(elements.loadingMessage) elements.loadingMessage.style.display = 'none'; console.error('서버 통신 오류:', error); if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red;">앗! 문제 발생: ${error.message}</p>`; if(elements.recordButton) { elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording');} } }
     function handleRobotResponse(resultFromServer) { if (!gameIsActive) return; if (!resultFromServer.success) { if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: red;">${resultFromServer.errorMessage || '결과 못 받음'}</p>`; handleWordFailure(); return; } const isCorrectAnswer = resultFromServer.feedbackMessage.includes("정확해요!"); if (isCorrectAnswer) handleWordSuccess(); else { if(elements.feedbackArea) elements.feedbackArea.innerHTML = `<p style="color: orange;">${resultFromServer.feedbackMessage}</p>`; handleWordFailure(); } }
     function shareGameResult() { if (!elements.finalMessage || !elements.finalScoreDisplay) return; let gameModeText = currentGameMode === MODE_LEVEL_PRACTICE ? "📝 레벨별 발음연습" : "🏆 스코어 어택!"; const titleToShare = "✨ 한국어 발음왕 도전! 내 결과 좀 봐! ✨"; const textToShare = `모드: ${gameModeText}\n결과: ${elements.finalMessage.textContent}\n${elements.finalScoreDisplay.textContent}\n\n같이 도전해봐! 👇\n#한국어발음왕 #발음챌린지`; const urlToShare = window.location.href; const shareData = { title: titleToShare, text: textToShare, url: urlToShare }; if (navigator.share) { try { navigator.share(shareData); } catch (err) { copyToClipboardFallback(titleToShare + "\n" + textToShare + "\n" + urlToShare); } } else { copyToClipboardFallback(titleToShare + "\n" + textToShare + "\n" + urlToShare); } }
     function copyToClipboardFallback(textToCopy) { navigator.clipboard.writeText(textToCopy).then(() => alert("게임 결과가 복사되었어요! SNS에 붙여넣고 자랑해보세요! 📋🎉")).catch(() => alert("앗! 결과 복사에 실패했어요. 😥")); }
@@ -78,14 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadVoices();
     if (elements.listenButton) { elements.listenButton.addEventListener('click', () => { if (!gameIsActive || !currentWordToPractice) return; if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(currentWordToPractice); utterance.lang = 'ko-KR'; utterance.rate = 0.85; utterance.pitch = 1; let koreanVoice = voices.find(voice => voice.lang === 'ko-KR'); if (koreanVoice) utterance.voice = koreanVoice; window.speechSynthesis.speak(utterance); } }); }
     if (elements.recordButton) { elements.recordButton.addEventListener('click', async () => { if (elements.recordButton.disabled || !gameIsActive) return; let timeIsUp = (currentGameMode === MODE_LEVEL_PRACTICE && wordTimeLeftInSeconds <= 0) || (currentGameMode === MODE_SCORE_ATTACK && overallGameTimeLeftInSeconds <= 0); if (timeIsUp) return; if (!isCurrentlyRecording) { try { currentAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorderTool = new MediaRecorder(currentAudioStream, { mimeType: 'audio/webm;codecs=opus' }); recordedAudioChunks = []; mediaRecorderTool.addEventListener('dataavailable', event => { if (event.data.size > 0) recordedAudioChunks.push(event.data); }); mediaRecorderTool.addEventListener('stop', () => { if (currentAudioStream) { currentAudioStream.getTracks().forEach(track => track.stop()); currentAudioStream = null; } const completeAudioBlob = new Blob(recordedAudioChunks, { type: mediaRecorderTool.mimeType }); if (gameIsActive && completeAudioBlob.size > 0) { sendVoiceToRobotForGrading(completeAudioBlob); } else if (gameIsActive && completeAudioBlob.size === 0) { if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>앗! 녹음된 목소리가 없어요.</p>"; elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.disabled = false; elements.recordButton.classList.remove('recording'); isCurrentlyRecording = false; if (currentGameMode === MODE_LEVEL_PRACTICE) startWordTimer(); } }); mediaRecorderTool.start(); elements.recordButton.textContent = '⏹️ 녹음 중지'; elements.recordButton.classList.add('recording'); if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>지금 말해보세요...🎙️</p>"; isCurrentlyRecording = true; } catch (error) { console.error("마이크 오류:", error); alert("마이크 사용 불가!"); if(elements.feedbackArea) elements.feedbackArea.innerHTML = "<p>마이크 사용 불가 😭</p>"; elements.recordButton.textContent = '🔴 녹음 시작'; elements.recordButton.classList.remove('recording'); isCurrentlyRecording = false;} } else { if (mediaRecorderTool && mediaRecorderTool.state === 'recording') { if (currentGameMode === MODE_LEVEL_PRACTICE) stopWordTimer(); isCurrentlyRecording = false; mediaRecorderTool.stop(); } elements.recordButton.textContent = '잠시만요...'; elements.recordButton.disabled = true; } }); }
-    
-    // --- 페이지 로드 시 버튼 이벤트 리스너 연결 및 게임 초기화 ---
+
+    // --- 🚀 4단계: 페이지 로드 시 버튼 이벤트 리스너 연결 및 게임 초기화 ---
     if (elements.startLevelPracticeButton) elements.startLevelPracticeButton.addEventListener('click', () => { showScreen('levelSelection'); });
     if (elements.startScoreAttackButton) elements.startScoreAttackButton.addEventListener('click', () => { currentGameMode = MODE_SCORE_ATTACK; currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3].sort(() => Math.random() - 0.5); startGame(MODE_SCORE_ATTACK); });
     if (elements.showRankingButton) elements.showRankingButton.addEventListener('click', showLeaderboard);
-    if (elements.startLevel1Button) elements.startLevel1Button.addEventListener('click', () => { currentWordList = wordLevels.level1; startGame(MODE_LEVEL_PRACTICE); });
-    if (elements.startLevel2Button) elements.startLevel2Button.addEventListener('click', () => { currentWordList = wordLevels.level2; startGame(MODE_LEVEL_PRACTICE); });
-    if (elements.startLevel3Button) elements.startLevel3Button.addEventListener('click', () => { currentWordList = wordLevels.level3; startGame(MODE_LEVEL_PRACTICE); });
+    if (elements.startLevel1Button) elements.startLevel1Button.addEventListener('click', () => { currentGameMode = MODE_LEVEL_PRACTICE; currentWordList = wordLevels.level1; startGame(MODE_LEVEL_PRACTICE); });
+    if (elements.startLevel2Button) elements.startLevel2Button.addEventListener('click', () => { currentGameMode = MODE_LEVEL_PRACTICE; currentWordList = wordLevels.level2; startGame(MODE_LEVEL_PRACTICE); });
+    if (elements.startLevel3Button) elements.startLevel3Button.addEventListener('click', () => { currentGameMode = MODE_LEVEL_PRACTICE; currentWordList = wordLevels.level3; startGame(MODE_LEVEL_PRACTICE); });
     if (elements.backToModeButton) elements.backToModeButton.addEventListener('click', () => showScreen('modeSelection'));
     if (elements.backToModeFromRankingButton) elements.backToModeFromRankingButton.addEventListener('click', () => showScreen('modeSelection'));
     if (elements.restartGameButton) elements.restartGameButton.addEventListener('click', () => { if(currentGameMode) { if(currentGameMode === MODE_SCORE_ATTACK) { currentWordList = [...wordLevels.level1, ...wordLevels.level2, ...wordLevels.level3].sort(() => Math.random() - 0.5); } startGame(currentGameMode); } else { initializeGame(); } });
