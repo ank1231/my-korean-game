@@ -9,14 +9,12 @@
 <body>
     <div class="container">
         <h1>🎤 한국어 발음왕 도전! 👑</h1>
-
         <div id="mode-selection-area">
             <h2>어떤 모드로 도전할까요?</h2>
             <button id="start-level-practice-btn" class="mode-button">📝 레벨별 발음연습</button>
             <button id="start-score-attack-btn" class="mode-button">🏆 스코어 어택!</button>
             <button id="show-ranking-btn" class="mode-button ranking-button">👑 명예의 전당 (랭킹)</button>
         </div>
-        
         <div id="level-selection-area" style="display: none;">
             <h2>레벨을 선택하세요!</h2>
             <button id="start-level-1-btn" class="level-button level-1">레벨 1: 자신감 뿜뿜반 💪</button>
@@ -24,7 +22,6 @@
             <button id="start-level-3-btn" class="level-button level-3">레벨 3: 최종보스! 발음의 신 👑</button>
             <button id="back-to-mode-btn" class="back-button">« 모드 다시 선택</button>
         </div>
-
         <div id="game-play-area" style="display: none;">
              <div id="overall-timer-display" class="overall-timer-style"></div>
             <div id="score-board" class="score-style"></div>
@@ -42,7 +39,6 @@
                 <div id="loading-message" style="display: none;">확인 중...</div>
             </div>
         </div>
-
         <div id="end-game-area" style="display: none;">
             <h2 id="final-message"></h2>
             <p id="final-score-display"></p>
@@ -54,12 +50,9 @@
             <button id="change-mode-btn" class="mode-button">🔄 다른 모드 선택</button>
             <button id="share-result-btn" class="mode-button share-button">✨ SNS에 결과 자랑하기!</button>
         </div>
-
         <div id="leaderboard-area" style="display: none;">
             <h2>👑 명예의 전당 👑</h2>
-            <ol id="ranking-list">
-                <p>랭킹을 불러오는 중...</p>
-            </ol>
+            <ol id="ranking-list"><p>랭킹을 불러오는 중...</p></ol>
             <button id="back-to-mode-from-ranking-btn" class="back-button">« 모드 선택으로 돌아가기</button>
         </div>
     </div>
