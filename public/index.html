@@ -3,59 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한국어 발음왕 도전 게임! (레벨 시스템 최종판)</title>
+    <title>한국어 발음 연습 게임</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎤 한국어 발음왕 도전! 👑</h1>
+        <h1>🎤 한국어 발음 연습 게임</h1>
 
         <div id="mode-selection-area">
-            <h2>어떤 모드로 도전할까요?</h2>
-            <button id="start-how-many-btn" class="mode-button">🚀 얼마나 많이 통과?</button>
-            <button id="start-time-attack-btn" class="mode-button">⏱️ 60초 타임어택!</button>
+            <h2>어떤 모드로 연습할까요?</h2>
+            <button id="start-level-mode-btn" class="mode-button">🚀 레벨별 연습</button>
+            <button id="start-score-attack-btn" class="mode-button">⏱️ 타임 어택</button>
+            <button id="view-leaderboard-btn" class="mode-button">🏆 순위표</button>
         </div>
         
         <div id="level-selection-area" style="display: none;">
             <h2>레벨을 선택하세요!</h2>
-            <button id="start-level-1-btn" class="level-button level-1">레벨 1: 자신감 뿜뿜반 💪</button>
-            <button id="start-level-2-btn" class="level-button level-2">레벨 2: 혀가 꼬일락 말락반 🤪</button>
-            <button id="start-level-3-btn" class="level-button level-3">레벨 3: 최종보스! 발음의 신 👑</button>
-            <button id="back-to-mode-btn" class="back-button">« 모드 다시 선택</button>
+            <button id="start-level-1-btn" class="level-button level-1">레벨 1</button>
+            <button id="start-level-2-btn" class="level-button level-2">레벨 2</button>
+            <button id="start-level-3-btn" class="level-button level-3">레벨 3</button>
+            <button id="start-level-4-btn" class="level-button level-4">레벨 4</button>
+            <button id="back-to-mode-btn" class="back-button">« 모드 선택</button>
         </div>
 
         <div id="game-play-area" style="display: none;">
             <div id="overall-timer-display" class="overall-timer-style">전체 시간: 60초</div>
-            <div id="score-board" class="score-style">통과: 0개</div>
+            <div id="score-board" class="score-style">성공: 0개</div>
 
             <div class="word-box">
-                <p>따라 읽어보세요:</p>
+                <p>다음 문장을 따라 읽어보세요!</p>
                 <h2 id="word-to-practice">준비!</h2>
-                <div id="timer-display" class="timer-style">단어 시간: 15초</div>
+                <div id="timer-display" class="timer-style">제한 시간: 15초</div>
             </div>
 
             <div class="action-buttons">
-                <button id="listen-button">🔊 소리 듣기</button>
-                <button id="record-button">🔴 녹음 시작</button>
+                <button id="listen-button">🔊 듣기</button>
+                <button id="record-button">🔴 녹음</button>
             </div>
 
             <div class="feedback-box">
-                <h3>📢 게임 상태</h3>
+                <h3>📢 결과</h3>
                 <div id="my-feedback">
                     <p>게임을 시작해주세요!</p>
                 </div>
-                <div id="loading-message" style="display: none;">확인 중...</div>
+                <div id="loading-message" style="display: none;">평가 중...</div>
             </div>
         </div>
 
         <div id="end-game-area" style="display: none;">
-            <h2 id="final-message">게임 결과!</h2>
+            <h2 id="final-message">게임 종료!</h2>
             <p id="final-score-display">점수: 0</p>
-            <button id="restart-game-btn" class="mode-button">💪 같은 모드 다시 도전!</button>
-            <button id="change-mode-btn" class="mode-button">🔄 다른 모드 선택</button>
-            <button id="share-result-btn" class="mode-button share-button">✨ SNS에 결과 자랑하기!</button>
+            <div id="score-save-container" style="display: none;">
+                <input type="text" id="player-name" placeholder="이름을 입력하세요 (8자 이내)">
+                <button id="save-score-btn" class="mode-button">기록 저장</button>
+            </div>
+            <button id="restart-game-btn" class="mode-button">💪 다시 도전!</button>
+            <button id="change-mode-btn" class="mode-button">🔄 모드 변경</button>
         </div>
     </div>
+
+    <div id="leaderboard-container" style="display: none;">
+        <h2>🏆 순위표 🏆</h2>
+        <div id="leaderboard"></div>
+        <button id="close-leaderboard-btn" class="mode-button">닫기</button>
+    </div>
+
     <script src="main.js"></script>
 </body>
 </html>
