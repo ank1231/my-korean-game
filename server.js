@@ -18,8 +18,8 @@ try {
     // 1순위: Render 서버 환경인지 확인 (환경변수 GOOGLE_CREDENTIALS_JSON_CONTENT 존재 여부)
     if (process.env.GOOGLE_CREDENTIALS_JSON_CONTENT) {
         console.log("💻 Render 서버 환경으로 판단됩니다. 비밀금고에서 열쇠를 찾습니다.");
-        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON_CONTENT);
-        googleSpeechClient = new SpeechClient({ credentials });
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON_CONTENT);
+    googleSpeechClient = new SpeechClient({ credentials });
         console.log("✅ 성공! Render 비밀금고의 열쇠로 구글 귀를 준비했어요!");
     } 
     // 2순위: 로컬 개발 환경인지 확인 (my_secret_google_key.json 파일 존재 여부)
