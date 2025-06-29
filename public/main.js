@@ -1,6 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("한국어 발음 연습 게임 로딩 완료! 🎮");
 
+    // --- TETR.IO 스타일 애니메이션 효과 ---
+    const createParticle = (x, y, color = '#667eea') => {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.background = color;
+        document.body.appendChild(particle);
+        
+        setTimeout(() => {
+            particle.remove();
+        }, 3000);
+    };
+
+    const addButtonClickEffect = (button, color = '#667eea') => {
+        const rect = button.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                createParticle(x + (Math.random() - 0.5) * 50, y + (Math.random() - 0.5) * 50, color);
+            }, i * 100);
+        }
+    };
+
+    const addSuccessEffect = () => {
+        const rect = wordDisplay.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                createParticle(x + (Math.random() - 0.5) * 100, y + (Math.random() - 0.5) * 100, '#00b894');
+            }, i * 150);
+        }
+    };
+
+    const addFailureEffect = () => {
+        const rect = wordDisplay.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 6; i++) {
+            setTimeout(() => {
+                createParticle(x + (Math.random() - 0.5) * 80, y + (Math.random() - 0.5) * 80, '#e74c3c');
+            }, i * 120);
+        }
+    };
+
     // --- HTML 요소 참조 ---
     const modeSelectionArea = document.getElementById('mode-selection-area');
     const levelSelectionArea = document.getElementById('level-selection-area');
@@ -18,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startLevelModeBtn = document.getElementById('start-level-mode-btn');
     const startScoreAttackBtn = document.getElementById('start-score-attack-btn');
+    const startLongSentenceBtn = document.getElementById('start-long-sentence-btn');
     const viewLeaderboardBtn = document.getElementById('view-leaderboard-btn');
     
     const levelButtons = {
@@ -49,8 +100,15 @@ document.addEventListener('DOMContentLoaded', () => {
         level4: ["숲 속 동굴 속에 숨어있는 살쾡이가 살랑살랑 살쾡이 꼬리를 살래살래 흔들면서 살금살금 슬금슬금 사람들을 살살 피해 다닌다", "우리집 옆집 앞집 뒷창살은 흩겹창살이고, 우리집 뒷집 앞집 옆창살은 겹흩창살이다", "한국관광공사 곽진광 관광과장", "앞 집 팥죽은 붉은 팥 풋팥죽이고 뒷집 콩죽은 햇콩단콩 콩죽 우리집 깨죽은 검은깨 깨죽인데 사람들은 햇콩 단콩 콩죽 깨죽 죽 먹기를 싫어하더라"]
     };
 
+    // --- 긴문장 목록 ---
+    const longSentences = [
+        '스위스에서 오셔서 산새들이 속삭이는 산림 숲속에서 숫사슴을 샅샅이 수색해 식사하고 산 속 새물로 세수하며 사는 삼십 삼 살 샴쌍둥이 미세스 스미스씨와 미스터 심슨씨는 샘송 설립 사장의 회사 자산 상속자인 사촌의 사돈 김상속씨의 숫기있고 송글송글한 숫색시 샘송소속 식산업 종사자 김산술씨를 만나서 샘송 수산물 운송수송 수색실장에게 스위스에서 숫사슴을 샅샅이 수색했던 것을 인정받아 스위스 수산물 운송 수송 과정에서 상해 삭힌 냄새가 나는 수산물을 수색해내는 샘송 소속 수산물 운송수송 수색 사원이 되기 위해 살신성인으로 쉴새없이 수색하다 산성수에 손이 산화되어 수술실에서 수술하게 됐다는데 쉽사리 수술이 잘 안 돼서 심신에 좋은 산삼을 달여 츄르릅 들이켰더니 힘이 샘솟아 다시 몸사려 수색하다 샘송 소속 식산업 종사자 김산술씨와 셋이서 삼삼오오 삼월 삼십 삼일 세시 삼십 삼분 삼십 삼초에 쉰 세살 김식사씨네 시내 스시 식당에 식사하러 가서 싱싱한 샥스핀 스시와 삼색샤시 참치스시를 살사 소스와 슥슥샥샥 샅샅이 비빈 것과 스위스산 소세지를 샤사샷 싹쓸어 입속에 쑤셔 넣어 살며시 삼키고 스산한 새벽 세시 삼십 삼분 삼십 삼초에 산립 숲속으로 사라졌다는 스위스에서 온 스미스씨 이야기',
+        '똑똑한 크낙새 딱따구리는 딱딱한 떡갈나무를 똑똑 쪼아대길 특기로 삼는데, 그 꼴을 못마땅하게 여긴 키 크고 코 큰 깐깐한 까투리 코코씨가 "네가 쪼는 그 떡갈나무는 내가 콩깍지를 까던 곳이니, 그만 쪼아대지 못할까!" 하고 빽빽 소리를 질렀다. 그러자 똑똑한 크낙새 딱따구리는 "콩깍지 까는 것과 떡갈나무 쪼는 것은 각각의 특기이니, 당신은 당신의 콩깍지를 까시오. 나는 나의 딱딱한 떡갈나무를 쪼아대겠소." 하고는 다시 떡갈나무를 똑똑, 콩깍지 터지듯 톡톡, 쉴 새 없이 쪼아댔다고 한다',
+        '박 법학박사의 부인인 박 뷰티박사는 박 법학박사가 법학박사 학위를 박탈당하자, 법학박사 학위 박탈에 대한 법적 대응책으로 불법 복제된 법학박사 학위증을 위조하려다, 박 법학박사의 법학박사 시절 법학 동료였던 방범복 차림의 방 법학박사에게 발각되어, 결국 박 법학박사와 박 뷰티박사 둘 다 불법 학위증 위조 및 증거 인멸 혐의로 구속되었다'
+    ];
+
     // --- 게임 상태 변수 ---
-    let currentMode = null; // 'LEVEL' 또는 'SCORE_ATTACK'
+    let currentMode = null; // 'LEVEL', 'SCORE_ATTACK', 또는 'LONG_SENTENCE'
     let currentWordList = [];
     let currentWord = "";
     let wordIndex = 0;
@@ -75,10 +133,22 @@ document.addEventListener('DOMContentLoaded', () => {
         endGameArea.style.display = 'none';
         leaderboardContainer.style.display = 'none';
         
-        if (screen === 'mode') modeSelectionArea.style.display = 'block';
-        else if (screen === 'level') levelSelectionArea.style.display = 'block';
-        else if (screen === 'game') gamePlayArea.style.display = 'block';
-        else if (screen === 'end') endGameArea.style.display = 'block';
+        if (screen === 'mode') {
+            modeSelectionArea.style.display = 'block';
+            modeSelectionArea.style.animation = 'fadeIn 0.6s ease-out';
+        }
+        else if (screen === 'level') {
+            levelSelectionArea.style.display = 'block';
+            levelSelectionArea.style.animation = 'fadeIn 0.6s ease-out';
+        }
+        else if (screen === 'game') {
+            gamePlayArea.style.display = 'block';
+            gamePlayArea.style.animation = 'fadeIn 0.6s ease-out';
+        }
+        else if (screen === 'end') {
+            endGameArea.style.display = 'block';
+            endGameArea.style.animation = 'fadeIn 0.6s ease-out';
+        }
     };
 
     // --- 게임 초기화 ---
@@ -93,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackArea.innerHTML = "<p>어떤 모드로 연습할까요?</p>";
         recordButton.disabled = true;
         listenButton.disabled = true;
+        gamePlayArea.classList.remove('long-sentence-mode');
         showScreen('mode');
     };
 
@@ -108,10 +179,20 @@ document.addEventListener('DOMContentLoaded', () => {
         recordButton.disabled = false;
         listenButton.disabled = false;
         
+        // 긴문장 모드일 때 CSS 클래스 추가
+        if (currentMode === 'LONG_SENTENCE') {
+            gamePlayArea.classList.add('long-sentence-mode');
+        } else {
+            gamePlayArea.classList.remove('long-sentence-mode');
+        }
+        
         if (currentMode === 'SCORE_ATTACK') {
             overallTimerDisplay.style.display = 'block';
             wordTimerDisplay.style.display = 'none';
             startOverallTimer();
+        } else if (currentMode === 'LONG_SENTENCE') {
+            overallTimerDisplay.style.display = 'none';
+            wordTimerDisplay.style.display = 'none';
         } else { // 'LEVEL'
             overallTimerDisplay.style.display = 'none';
             wordTimerDisplay.style.display = 'block';
@@ -127,6 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wordIndex >= currentWordList.length) {
             if (currentMode === 'LEVEL') {
                 endGame(true); // 레벨 모드 클리어
+            } else if (currentMode === 'LONG_SENTENCE') {
+                endGame(true); // 긴문장 모드 클리어
             } else { // 스코어 어택은 단어 목록 반복
                 wordIndex = 0; 
             }
@@ -135,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentWord = currentWordList[wordIndex];
         wordDisplay.textContent = currentWord;
         feedbackArea.innerHTML = "<p>발음해보세요!</p>";
-        recordButton.textContent = '🔴 녹음';
+        recordButton.innerHTML = '<i class="fas fa-microphone"></i> 녹음';
         recordButton.disabled = false;
         isRecording = false;
 
@@ -161,8 +244,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentMode === 'LEVEL' && wordTimeLeft > 0 && !wordTimer) {
             wordTimer = setInterval(() => {
                 wordTimeLeft--;
-                wordTimerDisplay.textContent = `단어 시간: ${wordTimeLeft}초`;
-                if (wordTimeLeft <= 5) wordTimerDisplay.style.color = 'orange';
+                wordTimerDisplay.innerHTML = `<i class="fas fa-hourglass-half"></i> 제한 시간: ${wordTimeLeft}초`;
+                if (wordTimeLeft <= 5) {
+                    wordTimerDisplay.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+                    wordTimerDisplay.style.animation = 'pulse 1s infinite';
+                }
                 if (wordTimeLeft <= 0) {
                     clearInterval(wordTimer);
                     endGame(false); // 시간 초과로 게임 오버
@@ -174,13 +260,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const startWordTimer = () => {
         clearInterval(wordTimer);
         wordTimeLeft = WORD_TIMER_DURATION;
-        wordTimerDisplay.textContent = `제한 시간: ${wordTimeLeft}초`;
-        wordTimerDisplay.style.color = '#c0392b';
-
+        wordTimerDisplay.innerHTML = `<i class="fas fa-hourglass-half"></i> 제한 시간: ${wordTimeLeft}초`;
+        wordTimerDisplay.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+        wordTimerDisplay.style.animation = 'none';
+        
         wordTimer = setInterval(() => {
             wordTimeLeft--;
-            wordTimerDisplay.textContent = `제한 시간: ${wordTimeLeft}초`;
-            if (wordTimeLeft <= 5) wordTimerDisplay.style.color = 'orange';
+            wordTimerDisplay.innerHTML = `<i class="fas fa-hourglass-half"></i> 제한 시간: ${wordTimeLeft}초`;
+            if (wordTimeLeft <= 5) {
+                wordTimerDisplay.style.animation = 'pulse 1s infinite';
+            }
             if (wordTimeLeft <= 0) {
                 clearInterval(wordTimer);
                 endGame(false); // 시간 초과로 게임 오버
@@ -191,16 +280,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const startOverallTimer = () => {
         clearInterval(overallTimer);
         overallTimeLeft = SCORE_ATTACK_DURATION;
-        overallTimerDisplay.textContent = `남은 시간: ${overallTimeLeft}초`;
-        overallTimerDisplay.style.color = '#e67e22';
-
+        overallTimerDisplay.innerHTML = `<i class="fas fa-clock"></i> 전체 시간: ${overallTimeLeft}초`;
+        
         overallTimer = setInterval(() => {
             overallTimeLeft--;
-            overallTimerDisplay.textContent = `남은 시간: ${overallTimeLeft}초`;
-            if (overallTimeLeft <= 10) overallTimerDisplay.style.color = '#e74c3c';
+            overallTimerDisplay.innerHTML = `<i class="fas fa-clock"></i> 전체 시간: ${overallTimeLeft}초`;
+            if (overallTimeLeft <= 10) {
+                overallTimerDisplay.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+                overallTimerDisplay.style.animation = 'pulse 1s infinite';
+            }
             if (overallTimeLeft <= 0) {
                 clearInterval(overallTimer);
-                endGame(false); // 시간 초과로 게임 종료
+                endGame(false); // 시간 초과로 게임 오버
             }
         }, 1000);
     };
@@ -209,214 +300,314 @@ document.addEventListener('DOMContentLoaded', () => {
     const endGame = (isClear) => {
         gameActive = false;
         stopAllTimers();
-        recordButton.disabled = true;
-        listenButton.disabled = true;
-
+        
         if (isClear) {
-            finalMessage.textContent = "🎉 연습 완료! 🎉";
-            finalScoreDisplay.textContent = `모든 문장을 성공적으로 완료했어요!`;
+            finalMessage.innerHTML = '<i class="fas fa-trophy"></i> 클리어!';
+            finalMessage.style.background = 'none';
+            finalMessage.style.color = '';
+            addSuccessEffect();
         } else {
-            if (currentMode === 'SCORE_ATTACK') {
-                finalMessage.textContent = "⏱️ 타임 어택 종료! ⏱️";
-                finalScoreDisplay.textContent = `최종 점수: ${score}점`;
-                scoreSaveContainer.style.display = 'block';
-            } else { // LEVEL 모드 실패
-                finalMessage.textContent = "게임 종료! 😊";
-                finalScoreDisplay.textContent = `성공한 문장: ${score}개`;
-                scoreSaveContainer.style.display = 'none';
-            }
+            finalMessage.innerHTML = '<i class="fas fa-times-circle"></i> 게임 오버!';
+            finalMessage.style.background = 'none';
+            finalMessage.style.color = '';
+            addFailureEffect();
         }
+        
+        finalScoreDisplay.innerHTML = `<i class="fas fa-medal"></i> 최종 점수: ${score}점`;
+        
+        // 순위표에 저장할 수 있는 점수인지 확인
+        const leaderboard = getLeaderboard();
+        const minScore = leaderboard.length >= 10 ? Math.min(...leaderboard.map(entry => entry.score)) : 0;
+        
+        if (score > minScore || leaderboard.length < 10) {
+            scoreSaveContainer.style.display = 'block';
+        } else {
+            scoreSaveContainer.style.display = 'none';
+        }
+        
         showScreen('end');
     };
 
-    // --- 점수판 업데이트 ---
+    // --- 점수 업데이트 ---
     const updateScoreboard = () => {
-        if (currentMode === 'SCORE_ATTACK') {
-            scoreBoard.textContent = `성공: ${score}개`;
-        } else {
-            scoreBoard.textContent = `성공: ${score} / ${currentWordList.length}`;
-        }
+        scoreBoard.innerHTML = `<i class="fas fa-star"></i> 성공: ${score}개`;
     };
-    
-    // --- 녹음 및 음성 평가 ---
-    const handleRecordClick = async () => {
-        if (recordButton.disabled || !gameActive) return;
 
-        if (isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
-            recordButton.textContent = '잠시만요...';
-            recordButton.disabled = true;
-            if (currentMode === 'LEVEL') {
-                pauseWordTimer();
-            }
-        } else {
+    // --- 녹음 처리 ---
+    const handleRecordClick = async () => {
+        if (!gameActive) return;
+
+        if (!isRecording) {
+            // 녹음 시작
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                mediaRecorder.onstop = () => {
-                    stream.getTracks().forEach(track => track.stop());
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    if (audioBlob.size > 0) {
-                        sendAudio(audioBlob);
-                    } else {
-                        feedbackArea.innerHTML = "<p>앗! 녹음된 목소리가 없어요.</p>";
-                        recordButton.disabled = false;
-                        if (currentMode === 'LEVEL') {
-                            resumeWordTimer();
-                        }
-                    }
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
                 };
-                
-                mediaRecorder.start();
-                recordButton.textContent = '⏹️ 중지';
-                feedbackArea.innerHTML = "<p>지금 말해보세요! 🎙️</p>";
-                isRecording = true;
-                if (currentMode === 'LEVEL') {
-                    resumeWordTimer();
-                }
 
-            } catch (err) {
-                console.error("마이크 오류:", err);
-                alert("마이크를 사용할 수 없습니다.");
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    // 음성 분석 시작 시에만 타이머 멈춤
+                    pauseWordTimer();
+                    await sendAudio(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordButton.innerHTML = '<i class="fas fa-stop"></i> 중지';
+                recordButton.classList.add('recording');
+                
+                // 녹음 시작 효과
+                addButtonClickEffect(recordButton, '#e74c3c');
+                
+            } catch (error) {
+                console.error('마이크 접근 오류:', error);
+                feedbackArea.innerHTML = "<p>마이크 접근이 거부되었습니다. 브라우저 설정을 확인해주세요.</p>";
             }
+        } else {
+            // 녹음 중지
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            recordButton.innerHTML = '<i class="fas fa-microphone"></i> 녹음';
+            recordButton.classList.remove('recording');
+            recordButton.disabled = true;
+            
+            loadingMessage.style.display = 'block';
+            feedbackArea.innerHTML = "<p>음성을 분석하고 있습니다...</p>";
         }
     };
 
+    // --- 서버로 음성 전송 ---
     const sendAudio = async (audioBlob) => {
-        loadingMessage.style.display = 'block';
-        feedbackArea.innerHTML = "";
-
-        const formData = new FormData();
-        formData.append('userAudio', audioBlob, 'recording.webm');
-        formData.append('koreanWord', currentWord);
-
         try {
-            const response = await fetch('/assess-my-voice', { method: 'POST', body: formData });
-            const result = await response.json();
+            const formData = new FormData();
+            formData.append('userAudio', audioBlob, 'recording.wav');
+            formData.append('koreanWord', currentWord);
 
-            if (!response.ok) throw new Error(result.errorMessage || '서버 응답 오류');
+            const response = await fetch('/assess-my-voice', {
+                method: 'POST',
+                body: formData
+            });
 
-            if (result.success && result.feedbackMessage.includes("정확해요!")) {
-                handleSuccess();
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    handleSuccess();
+                } else {
+                    handleFailure(result.errorMessage || '발음 평가에 실패했습니다.');
+                }
             } else {
-                handleFailure(result.feedbackMessage);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
         } catch (error) {
             console.error('서버 통신 오류:', error);
-            handleFailure(`통신 오류: ${error.message}`);
-        } finally {
-            loadingMessage.style.display = 'none';
+            handleFailure('서버 연결에 실패했습니다. 다시 시도해주세요.');
         }
     };
-    
+
+    // --- 성공 처리 ---
     const handleSuccess = () => {
+        loadingMessage.style.display = 'none';
         score++;
         updateScoreboard();
-        wordIndex++;
-        feedbackArea.innerHTML = `<p style="color: green; font-weight: bold;">정확해요! 🎉</p>`;
-        if (currentMode === 'LEVEL') {
-            pauseWordTimer(); // 타이머 완전 정지
-        }
-        setTimeout(() => nextWord(), 1000);
+        
+        feedbackArea.innerHTML = `
+            <h3><i class="fas fa-check-circle" style="color: #00b894;"></i> 정확한 발음입니다!</h3>
+            <p>잘하셨습니다! 다음 단어로 넘어갑니다.</p>
+        `;
+        
+        addSuccessEffect();
+        
+        // 음성 분석 완료 후 타이머 재개
+        resumeWordTimer();
+        
+        setTimeout(() => {
+            wordIndex++;
+            nextWord();
+        }, 2000);
     };
 
+    // --- 실패 처리 ---
     const handleFailure = (message) => {
-        feedbackArea.innerHTML = `<p style=\"color: orange;\">${message}</p>`;
+        loadingMessage.style.display = 'none';
+        
+        feedbackArea.innerHTML = `
+            <h3><i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> 발음 교정이 필요합니다</h3>
+            <p>${message}</p>
+            <p>다시 한 번 시도해보세요!</p>
+        `;
+        
+        addFailureEffect();
+        
+        // 음성 분석 완료 후 타이머 재개
+        resumeWordTimer();
+        
         recordButton.disabled = false;
-        recordButton.textContent = '🔴 녹음';
-        // 오답 시 타이머 재시작
-        if (currentMode === 'LEVEL') {
-            resumeWordTimer();
-        }
     };
 
-    // --- 리더보드 ---
+    // --- 발음 오류 하이라이트 ---
+    const highlightMistakes = (originalText, feedbackMessage) => {
+        // 간단한 오류 하이라이트 로직
+        const highlightedText = originalText.replace(/([가-힣]+)/g, '<span style="color: #e74c3c; font-weight: bold;">$1</span>');
+        return highlightedText;
+    };
+
+    // --- 순위표 관리 ---
     const getLeaderboard = () => JSON.parse(localStorage.getItem(LEADERBOARD_KEY)) || [];
     const saveLeaderboard = (board) => localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(board));
 
     const showLeaderboard = () => {
-        const board = getLeaderboard();
-        board.sort((a, b) => b.score - a.score);
-
+        const leaderboard = getLeaderboard();
         leaderboardDiv.innerHTML = '';
-        if (board.length === 0) {
-            leaderboardDiv.innerHTML = '<p>아직 기록이 없어요. 첫 번째 챔피언이 되어보세요!</p>';
+        
+        if (leaderboard.length === 0) {
+            leaderboardDiv.innerHTML = '<p style="text-align: center; color: #a0aec0;">아직 기록이 없습니다.</p>';
         } else {
-            board.slice(0, 10).forEach((entry, i) => { // 상위 10개만 표시
-                const rank = i + 1;
-                const entryDiv = document.createElement('div');
-                entryDiv.innerHTML = `<span>${rank}. ${entry.name}</span><span>${entry.score}점</span>`;
-                leaderboardDiv.appendChild(entryDiv);
+            leaderboard.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <span><strong>${index + 1}.</strong> ${entry.name}</span>
+                    <span>${entry.score}점</span>
+                `;
+                leaderboardDiv.appendChild(div);
             });
         }
+        
         leaderboardContainer.style.display = 'block';
+        leaderboardContainer.style.animation = 'fadeIn 0.6s ease-out';
     };
-    
-    const hideLeaderboard = () => leaderboardContainer.style.display = 'none';
+
+    const hideLeaderboard = () => {
+        leaderboardContainer.style.display = 'none';
+    };
 
     const saveScore = () => {
-        const name = playerNameInput.value.trim();
-        if (!name) {
+        const playerName = playerNameInput.value.trim();
+        if (!playerName) {
             alert('이름을 입력해주세요!');
             return;
         }
-        if (name.length > 8) {
-            alert('이름은 8자 이내로 입력해주세요.');
-            return;
-        }
-
-        const board = getLeaderboard();
-        board.push({ name, score });
-        saveLeaderboard(board);
         
+        const leaderboard = getLeaderboard();
+        leaderboard.push({ name: playerName, score: score, date: new Date().toISOString() });
+        leaderboard.sort((a, b) => b.score - a.score);
+        
+        if (leaderboard.length > 10) {
+            leaderboard.splice(10);
+        }
+        
+        saveLeaderboard(leaderboard);
         scoreSaveContainer.style.display = 'none';
-        playerNameInput.value = '';
-        showLeaderboard();
+        
+        // 저장 성공 효과
+        addButtonClickEffect(saveScoreBtn, '#00b894');
+        
+        alert('점수가 저장되었습니다!');
     };
 
-    // --- 이벤트 리스너 연결 ---
+    // --- 이벤트 리스너 ---
     startLevelModeBtn.addEventListener('click', () => {
+        addButtonClickEffect(startLevelModeBtn, '#667eea');
         currentMode = 'LEVEL';
         showScreen('level');
     });
 
     startScoreAttackBtn.addEventListener('click', () => {
+        addButtonClickEffect(startScoreAttackBtn, '#667eea');
         currentMode = 'SCORE_ATTACK';
         const allWords = [...words.level1, ...words.level2, ...words.level3, ...words.level4];
-        allWords.sort(() => 0.5 - Math.random()); // 섞기
         startGame(allWords);
     });
 
-    Object.keys(levelButtons).forEach(level => {
-        levelButtons[level].addEventListener('click', () => {
-            startGame(words[level]);
-        });
+    startLongSentenceBtn.addEventListener('click', () => {
+        addButtonClickEffect(startLongSentenceBtn, '#667eea');
+        currentMode = 'LONG_SENTENCE';
+        startGame(longSentences);
     });
 
-    restartGameBtn.addEventListener('click', () => {
-        // 현재 모드와 단어 목록 그대로 다시 시작
-        startGame(currentWordList);
+    viewLeaderboardBtn.addEventListener('click', () => {
+        addButtonClickEffect(viewLeaderboardBtn, '#667eea');
+        showLeaderboard();
     });
-    
-    changeModeBtn.addEventListener('click', initializeGame);
-    backToModeBtn.addEventListener('click', () => showScreen('mode'));
+
+    levelButtons.level1.addEventListener('click', () => {
+        addButtonClickEffect(levelButtons.level1, '#00b894');
+        startGame(words.level1);
+    });
+
+    levelButtons.level2.addEventListener('click', () => {
+        addButtonClickEffect(levelButtons.level2, '#f39c12');
+        startGame(words.level2);
+    });
+
+    levelButtons.level3.addEventListener('click', () => {
+        addButtonClickEffect(levelButtons.level3, '#3498db');
+        startGame(words.level3);
+    });
+
+    levelButtons.level4.addEventListener('click', () => {
+        addButtonClickEffect(levelButtons.level4, '#9b59b6');
+        startGame(words.level4);
+    });
+
+    backToModeBtn.addEventListener('click', () => {
+        addButtonClickEffect(backToModeBtn, '#6c757d');
+        showScreen('mode');
+    });
+
     recordButton.addEventListener('click', handleRecordClick);
 
     listenButton.addEventListener('click', () => {
-        if (!gameActive || !currentWord) return;
-        const utterance = new SpeechSynthesisUtterance(currentWord);
-        utterance.lang = 'ko-KR';
-        speechSynthesis.speak(utterance);
+        addButtonClickEffect(listenButton, '#667eea');
+        // TTS 기능은 브라우저 지원에 따라 구현
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(currentWord);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+        } else {
+            feedbackArea.innerHTML = "<p>브라우저에서 음성 합성을 지원하지 않습니다.</p>";
+        }
     });
 
-    viewLeaderboardBtn.addEventListener('click', showLeaderboard);
-    closeLeaderboardBtn.addEventListener('click', hideLeaderboard);
-    saveScoreBtn.addEventListener('click', saveScore);
+    restartGameBtn.addEventListener('click', () => {
+        addButtonClickEffect(restartGameBtn, '#667eea');
+        if (currentMode === 'LEVEL') {
+            startGame(currentWordList);
+        } else if (currentMode === 'SCORE_ATTACK') {
+            const allWords = [...words.level1, ...words.level2, ...words.level3, ...words.level4];
+            startGame(allWords);
+        } else if (currentMode === 'LONG_SENTENCE') {
+            startGame(longSentences);
+        } else {
+            initializeGame();
+        }
+    });
 
-    // --- 최초 실행 ---
+    changeModeBtn.addEventListener('click', () => {
+        addButtonClickEffect(changeModeBtn, '#667eea');
+        showScreen('mode');
+    });
+
+    saveScoreBtn.addEventListener('click', saveScore);
+    closeLeaderboardBtn.addEventListener('click', () => {
+        addButtonClickEffect(closeLeaderboardBtn, '#667eea');
+        hideLeaderboard();
+    });
+
+    // Enter 키로 점수 저장
+    playerNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveScore();
+        }
+    });
+
+    // 게임 초기화
     initializeGame();
 });
