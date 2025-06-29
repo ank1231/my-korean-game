@@ -87,11 +87,11 @@ app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, r
 
             if (recognizedTextCleaned === practiceWordCleaned) {
                 feedbackMessageToUser = '정확해요! 👍 컴퓨터가 원래 단어("' + practiceWord + '")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "' + recognizedText + '")';
+                res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
             } else {
                 feedbackMessageToUser = '음... 컴퓨터는 "' + recognizedText + '" 라고 알아들었대요. 원래 단어는 "' + practiceWord + '" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기/부호는 괜찮아요!)';
+                res.json({ success: false, errorMessage: feedbackMessageToUser, recognizedText: recognizedText, practiceWord: practiceWord });
             }
-            
-            res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
         } else {
             res.status(400).json({ success: false, errorMessage: feedbackMessageToUser });
         }
