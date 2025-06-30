@@ -1,4 +1,4 @@
-/* TETR.IO 스타일 한국어 발음 연습 게임 */
+/* 한국어 발음 연습 게임 - 깔끔한 스타일 */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
 
@@ -11,13 +11,16 @@
 body {
     background: #181a20;
     color: #fff;
-    font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
+    padding: 0;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 body::before {
@@ -36,7 +39,7 @@ body::before {
 }
 
 .container {
-    width: 100%;
+    width: 90%;
     max-width: 420px;
     margin: 0 auto;
     padding: 40px 20px 32px 20px;
@@ -46,6 +49,7 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
+    text-align: center;
 }
 
 /* 메인 타이틀 */
@@ -59,11 +63,6 @@ h1 {
     margin-bottom: 36px;
     margin-top: 0;
     text-align: center;
-}
-
-@keyframes tetrio-pulse {
-    0% { text-shadow: 0 0 8px #ff3b3b, 0 0 24px #ff3b3b, 0 0 48px #ff3b3b; }
-    100% { text-shadow: 0 0 24px #ff3b3b, 0 0 48px #ff3b3b, 0 0 96px #ff3b3b; }
 }
 
 /* 섹션 제목 */
@@ -83,9 +82,9 @@ h2 {
     margin: 10px 0;
     padding: 18px 0;
     font-size: 1.1rem;
-    font-family: 'Montserrat', 'Inter', Arial, sans-serif;
-    font-weight: 700;
-    border: none;
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 600;
+    border: 2px solid transparent;
     border-radius: 10px;
     background: linear-gradient(90deg, #7de2fc 0%, #b9b6e5 100%);
     color: #181a20;
@@ -328,6 +327,11 @@ h2 {
     text-align: center;
 }
 
+@keyframes tetrio-pulse {
+    0% { text-shadow: 0 0 8px #ff3b3b, 0 0 24px #ff3b3b, 0 0 48px #ff3b3b; }
+    100% { text-shadow: 0 0 24px #ff3b3b, 0 0 48px #ff3b3b, 0 0 96px #ff3b3b; }
+}
+
 #final-score-display {
     font-size: 1.3rem;
     color: #fff;
@@ -337,167 +341,172 @@ h2 {
     text-align: center;
 }
 
-/* 점수 저장 */
 #score-save-container {
-    margin: 25px 0;
+    margin-bottom: 20px;
 }
 
 #player-name {
-    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
-    border: 2px solid #404040;
-    color: #ffffff;
-    padding: 16px 20px;
-    border-radius: 12px;
-    font-size: 1.1rem;
     width: 100%;
     max-width: 300px;
+    padding: 12px 16px;
+    border: 2px solid #4a5568;
+    border-radius: 8px;
+    background: #2d3748;
+    color: #fff;
+    font-size: 1rem;
     margin-bottom: 15px;
-    font-family: 'Inter', sans-serif;
-    transition: all 0.3s ease;
+    text-align: center;
+    transition: border-color 0.3s ease;
 }
 
 #player-name:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #7de2fc;
+    box-shadow: 0 0 0 3px rgba(125, 226, 252, 0.1);
 }
 
 #player-name::placeholder {
     color: #a0aec0;
 }
 
-/* 순위표 */
 #leaderboard-container {
-    background: #23242a;
-    border-radius: 14px;
-    box-shadow: 0 4px 24px #000a;
-    padding: 24px 18px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(24,26,32,0.98);
+    border: 2px solid #4a5568;
+    border-radius: 16px;
+    padding: 30px;
     max-width: 400px;
-    margin: 0 auto;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
 }
 
 #leaderboard-container h2 {
     color: #7de2fc;
-    font-size: 1.5rem;
-    margin-bottom: 18px;
-    text-shadow: 0 0 8px #7de2fc;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 #leaderboard {
-    max-height: 350px;
-    overflow-y: auto;
     margin-bottom: 20px;
 }
 
 #leaderboard div {
-    background: #23242a;
-    color: #fff;
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    font-size: 1.1rem;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 8px 0;
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-radius: 8px;
+    border: 1px solid #718096;
+    transition: all 0.3s ease;
 }
 
 #leaderboard div:hover {
-    border-color: #667eea;
-    transform: translateX(5px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(125, 226, 252, 0.2);
 }
 
 #leaderboard div:nth-child(1) {
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    color: #1a202c;
-    font-weight: 700;
+    color: #181a20;
+    font-weight: bold;
 }
 
 #leaderboard div:nth-child(2) {
-    background: linear-gradient(135deg, #c0c0c0 0%, #e2e8f0 100%);
-    color: #1a202c;
-    font-weight: 600;
+    background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
+    color: #181a20;
+    font-weight: bold;
 }
 
 #leaderboard div:nth-child(3) {
-    background: linear-gradient(135deg, #cd7f32 0%, #d69e2e 100%);
-    color: #1a202c;
-    font-weight: 600;
+    background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+    color: #181a20;
+    font-weight: bold;
 }
 
-/* 스크롤바 스타일 */
 #leaderboard::-webkit-scrollbar {
     width: 8px;
 }
 
 #leaderboard::-webkit-scrollbar-track {
-    background: #2c2c2c;
+    background: #2d3748;
     border-radius: 4px;
 }
 
 #leaderboard::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #4a5568;
     border-radius: 4px;
 }
 
 #leaderboard::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #7c8feb 0%, #8a5bb3 100%);
+    background: #718096;
 }
 
-/* 비활성화 버튼 */
-.mode-button:disabled, .level-button:disabled, .action-buttons button:disabled {
-    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
-    border-color: #718096 !important;
+.mode-button:disabled, .level-button:disabled, .action-buttons button:disabled { 
+    background: #4a5568 !important;
     color: #a0aec0 !important;
     cursor: not-allowed !important;
     transform: none !important;
     box-shadow: none !important;
 }
 
-/* 긴문장 모드 */
+/* 긴문장 모드 스타일 */
 .long-sentence-mode .word-box {
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+    padding: 20px;
 }
 
 .long-sentence-mode .word-box h2 {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    white-space: pre-line;
-    font-size: 1.1rem;
-    font-weight: 500;
-    line-height: 1.8;
-    text-align: left;
-    padding: 22px 18px;
-    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-    border-left: 4px solid #667eea;
-    border-radius: 12px;
+    font-size: 1.8rem;
+    min-height: auto;
+    line-height: 1.6;
     word-break: keep-all;
+    hyphens: auto;
+    text-align: left;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 0;
+    margin: 0;
 }
 
 .long-sentence-mode .feedback-box {
-    background: linear-gradient(135deg, #744210 0%, #975a16 100%);
-    border-color: #d69e2e;
+    margin-top: 20px;
 }
 
 .long-sentence-mode .feedback-box h3 {
-    color: #fef5e7;
+    font-size: 1.1rem;
 }
 
-/* 반응형 디자인 */
 @media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
     .container {
-        padding: 18px 4px 12px 4px;
+        width: 95%;
+        padding: 30px 15px 25px 15px;
+        margin: 0 auto;
     }
     h1 {
-        font-size: 1.5rem;
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+    h2 {
+        font-size: 1.7rem;
+        margin-bottom: 30px;
     }
     #end-game-area h2 {
-        font-size: 1.3rem;
+        font-size: 1.8rem;
     }
     .mode-button, .level-button, .back-button, .action-buttons button {
         font-size: 1rem;
-        padding: 12px 0;
+        padding: 15px 10px;
+        margin: 8px 0;
     }
 }
 
@@ -508,79 +517,54 @@ h2 {
 }
 
 #mode-selection-area, #level-selection-area, #game-play-area, #end-game-area {
-    animation: fadeIn 0.6s ease-out;
+    animation: fadeIn 0.5s ease-out;
 }
 
-/* 파티클 효과 */
 .particle {
     position: absolute;
     width: 4px;
     height: 4px;
-    background: #667eea;
+    background: #7de2fc;
     border-radius: 50%;
     pointer-events: none;
     animation: float 3s ease-in-out infinite;
+    opacity: 0.8;
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 1; }
-    50% { transform: translateY(-20px) rotate(180deg); opacity: 0.7; }
+    0%, 100% { transform: translateY(0); opacity: 0.8; }
+    50% { transform: translateY(-20px); opacity: 0.4; }
 }
 
-/* 모드 선택 화면만 예전 스타일로 복원 */
 #mode-selection-area {
-    background: rgba(10, 12, 20, 0.98);
-    border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
-    padding: 48px 32px 36px 32px;
-    margin-bottom: 32px;
-    max-width: 420px;
-    margin-left: auto;
-    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    width: 100%;
 }
+
 #mode-selection-area h1 {
-    font-size: 2.7rem;
-    font-family: 'Montserrat', 'Inter', Arial, sans-serif;
-    font-weight: 700;
-    color: #7de2fc;
-    letter-spacing: 0.04em;
-    text-shadow: 0 0 24px #7de2fc, 0 0 48px #7de2fc;
-    margin-bottom: 36px;
-    margin-top: 0;
+    margin-bottom: 40px;
     text-align: center;
 }
+
 #mode-selection-area h2 {
-    font-size: 1.5rem;
-    color: #fff;
-    font-weight: 700;
-    margin-bottom: 32px;
+    margin-bottom: 30px;
     text-align: center;
-    text-shadow: 0 0 8px #222;
 }
+
 #mode-selection-area .mode-button {
-    background: linear-gradient(90deg, #7de2fc 0%, #b9b6e5 100%);
-    color: #181a20;
-    border-radius: 12px;
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin: 14px 0;
-    padding: 18px 0;
-    box-shadow: 0 2px 12px rgba(125,226,252,0.12);
-    border: none;
+    margin: 8px 0;
     width: 100%;
     max-width: 340px;
-    letter-spacing: 0.02em;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-#mode-selection-area .mode-button:hover {
-    background: linear-gradient(90deg, #b9b6e5 0%, #7de2fc 100%);
-    color: #222;
-    box-shadow: 0 4px 24px #7de2fc44;
 }
 
-/* 나머지 화면은 TETR.IO 스타일 유지 (이전 스타일과 충돌 방지) */
+#mode-selection-area .mode-button:hover {
+    transform: translateY(-2px);
+}
+
 .container:not(#mode-selection-area) {
-    background: rgba(24,26,32,0.98);
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    min-height: auto;
 }
