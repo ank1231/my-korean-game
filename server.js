@@ -77,20 +77,50 @@ app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, r
             recognizedText = googleResponse.results[0].alternatives[0].transcript; 
             console.log(`컴퓨터가 알아들은 단어는 바로: "${recognizedText}"`);
 
-            // ⭐⭐⭐ 여기가 바로 바뀐 부분이에요! 문장 부호까지 없애는 더 강력한 마법! ⭐⭐⭐
-            // 정규식 /[.,?!]/g 는 글자 중에서 온점, 쉼표, 물음표, 느낌표를 찾아서 없애라는 뜻이에요.
-            const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
-            const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
-
-            console.log(`[비교] 원래 단어 (부호/공백 제거): "${practiceWordCleaned}"`);
-            console.log(`[비교] 알아들은 단어 (부호/공백 제거): "${recognizedTextCleaned}"`);
-
-            if (recognizedTextCleaned === practiceWordCleaned) {
-                feedbackMessageToUser = '정확해요! 👍 컴퓨터가 원래 단어("' + practiceWord + '")의 뜻을 정확히 알아들었어요! (컴퓨터가 들은 말: "' + recognizedText + '")';
-                res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
+            // 긴문장인지 확인 (50자 이상)
+            const isLongSentence = practiceWord.length > 50;
+            
+            if (isLongSentence) {
+                // 긴문장용 유연한 평가 시스템
+                const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
+                const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
+                
+                // 긴문장에서는 키워드 매칭 방식 사용
+                const practiceKeywords = extractKeywords(practiceWordCleaned);
+                const recognizedKeywords = extractKeywords(recognizedTextCleaned);
+                
+                const matchedKeywords = practiceKeywords.filter(keyword => 
+                    recognizedKeywords.some(recKeyword => 
+                        recKeyword.includes(keyword) || keyword.includes(recKeyword)
+                    )
+                );
+                
+                const accuracy = matchedKeywords.length / practiceKeywords.length;
+                
+                console.log(`[긴문장 평가] 키워드 매칭: ${matchedKeywords.length}/${practiceKeywords.length} (정확도: ${(accuracy * 100).toFixed(1)}%)`);
+                
+                if (accuracy >= 0.6) { // 60% 이상 매칭되면 성공
+                    feedbackMessageToUser = `좋아요! 👍 긴문장을 ${(accuracy * 100).toFixed(0)}% 정확하게 발음하셨네요! (컴퓨터가 들은 말: "${recognizedText}")`;
+                    res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord, accuracy: accuracy });
+                } else {
+                    feedbackMessageToUser = `긴문장 발음이 조금 어려웠나요. 정확도: ${(accuracy * 100).toFixed(0)}%. 컴퓨터가 들은 말: "${recognizedText}". 다시 한번 천천히 발음해보세요! 😊`;
+                    res.json({ success: false, errorMessage: feedbackMessageToUser, recognizedText: recognizedText, practiceWord: practiceWord, accuracy: accuracy });
+                }
             } else {
-                feedbackMessageToUser = '음... 컴퓨터는 "' + recognizedText + '" 라고 알아들었대요. 원래 단어는 "' + practiceWord + '" 인데, 발음을 조금만 더 또박또박 해볼까요? 😉 (띄어쓰기/부호는 괜찮아요!)';
-                res.json({ success: false, errorMessage: feedbackMessageToUser, recognizedText: recognizedText, practiceWord: practiceWord });
+                // 짧은 문장용 기존 평가 시스템
+                const practiceWordCleaned = practiceWord.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
+                const recognizedTextCleaned = recognizedText.replace(/[.,?!]/g, '').replace(/\s+/g, '').trim().toLowerCase();
+
+                console.log(`[비교] 원래 단어 (부호/공백 제거): "${practiceWordCleaned}"`);
+                console.log(`[비교] 알아들은 단어 (부호/공백 제거): "${recognizedTextCleaned}"`);
+
+                if (recognizedTextCleaned === practiceWordCleaned) {
+                    feedbackMessageToUser = '정확해요! 👍';
+                    res.json({ success: true, recognizedText: recognizedText, feedbackMessage: feedbackMessageToUser, practiceWord: practiceWord });
+                } else {
+                    feedbackMessageToUser = `컴퓨터가 들은 단어: "${recognizedText}"`;
+                    res.json({ success: false, errorMessage: feedbackMessageToUser, recognizedText: recognizedText, practiceWord: practiceWord });
+                }
             }
         } else {
             res.status(400).json({ success: false, errorMessage: feedbackMessageToUser });
@@ -100,6 +130,23 @@ app.post('/assess-my-voice', uploadMiddleware.single('userAudio'), async (req, r
         res.status(500).json({ success: false, errorMessage: '앗! 일꾼 로봇이 갑자기 아파서 일을 못했어요. 잠시 후 다시 시도해주세요!' });
     }
 });
+
+// 키워드 추출 함수 (긴문장용)
+function extractKeywords(text) {
+    // 2-4글자 단어들을 키워드로 추출
+    const words = text.match(/[가-힣]{2,4}/g) || [];
+    // 중복 제거하고 빈도순으로 정렬
+    const wordCount = {};
+    words.forEach(word => {
+        wordCount[word] = (wordCount[word] || 0) + 1;
+    });
+    
+    // 빈도가 높은 순으로 정렬하고 상위 10개 반환
+    return Object.entries(wordCount)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([word]) => word);
+}
 
 // 일꾼 로봇아, 이제부터 손님을 기다려!
 app.listen(port, () => {
