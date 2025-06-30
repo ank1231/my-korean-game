@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const endGameArea = document.getElementById('end-game-area');
     
     const wordDisplay = document.getElementById('word-to-practice');
-    const listenButton = document.getElementById('listen-button');
     const recordButton = document.getElementById('record-button');
     const feedbackArea = document.getElementById('my-feedback');
     const loadingMessage = document.getElementById('loading-message');
@@ -102,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 긴문장 목록 ---
     const longSentences = [
-        '스위스에서 오셔서 산새들이 속삭이는 산림 숲속에서 숫사슴을 샅샅이 수색해 식사하고 산 속 새물로 세수하며 사는 삼십 삼 살 샴쌍둥이 미세스 스미스씨와 미스터 심슨씨는 샘송 설립 사장의 회사 자산 상속자인 사촌의 사돈 김상속씨의 숫기있고 송글송글한 숫색시 샘송소속 식산업 종사자 김산술씨를 만나서 샘송 수산물 운송수송 수색실장에게 스위스에서 숫사슴을 샅샅이 수색했던 것을 인정받아 스위스 수산물 운송 수송 과정에서 상해 삭힌 냄새가 나는 수산물을 수색해내는 샘송 소속 수산물 운송수송 수색 사원이 되기 위해 살신성인으로 쉴새없이 수색하다 산성수에 손이 산화되어 수술실에서 수술하게 됐다는데 쉽사리 수술이 잘 안 돼서 심신에 좋은 산삼을 달여 츄르릅 들이켰더니 힘이 샘솟아 다시 몸사려 수색하다 샘송 소속 식산업 종사자 김산술씨와 셋이서 삼삼오오 삼월 삼십 삼일 세시 삼십 삼분 삼십 삼초에 쉰 세살 김식사씨네 시내 스시 식당에 식사하러 가서 싱싱한 샥스핀 스시와 삼색샤시 참치스시를 살사 소스와 슥슥샥샥 샅샅이 비빈 것과 스위스산 소세지를 샤사샷 싹쓸어 입속에 쑤셔 넣어 살며시 삼키고 스산한 새벽 세시 삼십 삼분 삼십 삼초에 산립 숲속으로 사라졌다는 스위스에서 온 스미스씨 이야기',
         '똑똑한 크낙새 딱따구리는 딱딱한 떡갈나무를 똑똑 쪼아대길 특기로 삼는데, 그 꼴을 못마땅하게 여긴 키 크고 코 큰 깐깐한 까투리 코코씨가 "네가 쪼는 그 떡갈나무는 내가 콩깍지를 까던 곳이니, 그만 쪼아대지 못할까!" 하고 빽빽 소리를 질렀다. 그러자 똑똑한 크낙새 딱따구리는 "콩깍지 까는 것과 떡갈나무 쪼는 것은 각각의 특기이니, 당신은 당신의 콩깍지를 까시오. 나는 나의 딱딱한 떡갈나무를 쪼아대겠소." 하고는 다시 떡갈나무를 똑똑, 콩깍지 터지듯 톡톡, 쉴 새 없이 쪼아댔다고 한다',
         '박 법학박사의 부인인 박 뷰티박사는 박 법학박사가 법학박사 학위를 박탈당하자, 법학박사 학위 박탈에 대한 법적 대응책으로 불법 복제된 법학박사 학위증을 위조하려다, 박 법학박사의 법학박사 시절 법학 동료였던 방범복 차림의 방 법학박사에게 발각되어, 결국 박 법학박사와 박 뷰티박사 둘 다 불법 학위증 위조 및 증거 인멸 혐의로 구속되었다'
     ];
@@ -162,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         wordDisplay.textContent = "연습 모드를 선택해주세요!";
         feedbackArea.innerHTML = "<p>어떤 모드로 연습할까요?</p>";
         recordButton.disabled = true;
-        listenButton.disabled = true;
         gamePlayArea.classList.remove('long-sentence-mode');
         showScreen('mode');
     };
@@ -177,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         showScreen('game');
         recordButton.disabled = false;
-        listenButton.disabled = false;
         
         // 긴문장 모드일 때 CSS 클래스 추가
         if (currentMode === 'LONG_SENTENCE') {
@@ -208,8 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wordIndex >= currentWordList.length) {
             if (currentMode === 'LEVEL') {
                 endGame(true); // 레벨 모드 클리어
+                return; // 게임 종료 후 더 이상 진행하지 않음
             } else if (currentMode === 'LONG_SENTENCE') {
                 endGame(true); // 긴문장 모드 클리어
+                return; // 게임 종료 후 더 이상 진행하지 않음
             } else { // 스코어 어택은 단어 목록 반복
                 wordIndex = 0; 
             }
@@ -315,13 +313,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         finalScoreDisplay.innerHTML = `<i class="fas fa-medal"></i> 최종 점수: ${score}점`;
         
-        // 순위표에 저장할 수 있는 점수인지 확인
-        const leaderboard = getLeaderboard();
-        const minScore = leaderboard.length >= 10 ? Math.min(...leaderboard.map(entry => entry.score)) : 0;
-        
-        if (score > minScore || leaderboard.length < 10) {
-            scoreSaveContainer.style.display = 'block';
+        // 타임어택 모드에서만 순위표에 저장할 수 있는 점수인지 확인
+        if (currentMode === 'SCORE_ATTACK') {
+            const leaderboard = getLeaderboard();
+            const minScore = leaderboard.length >= 10 ? Math.min(...leaderboard.map(entry => entry.score)) : 0;
+            
+            if (score > minScore || leaderboard.length < 10) {
+                scoreSaveContainer.style.display = 'block';
+            } else {
+                scoreSaveContainer.style.display = 'none';
+            }
         } else {
+            // 연습모드에서는 기록 저장 기능 숨김
             scoreSaveContainer.style.display = 'none';
         }
         
@@ -336,18 +339,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 녹음 처리 ---
     const handleRecordClick = async () => {
         if (!gameActive) return;
-
+        
         if (!isRecording) {
             // 녹음 시작
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-
+                
                 mediaRecorder.ondataavailable = (event) => {
                     audioChunks.push(event.data);
                 };
-
+                
                 mediaRecorder.onstop = async () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     // 음성 분석 시작 시에만 타이머 멈춤
@@ -355,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     await sendAudio(audioBlob);
                     stream.getTracks().forEach(track => track.stop());
                 };
-
+                
                 mediaRecorder.start();
                 isRecording = true;
                 recordButton.innerHTML = '<i class="fas fa-stop"></i> 중지';
@@ -389,59 +392,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData();
             formData.append('userAudio', audioBlob, 'recording.wav');
             formData.append('koreanWord', currentWord);
-
+            
             const response = await fetch('/assess-my-voice', {
                 method: 'POST',
                 body: formData
             });
-
+            
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    handleSuccess();
+                    handleSuccess(result.recognizedText);
                 } else {
-                    handleFailure(result.errorMessage || '발음 평가에 실패했습니다.');
+                    handleFailure(result.recognizedText || result.errorMessage || '인식되지 않았습니다.');
                 }
             } else {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
         } catch (error) {
             console.error('서버 통신 오류:', error);
-            handleFailure('서버 연결에 실패했습니다. 다시 시도해주세요.');
+            handleFailure('서버 연결에 실패했습니다.');
         }
     };
 
     // --- 성공 처리 ---
-    const handleSuccess = () => {
+    const handleSuccess = (recognizedText) => {
         loadingMessage.style.display = 'none';
         score++;
         updateScoreboard();
         
-        feedbackArea.innerHTML = `
-            <h3><i class="fas fa-check-circle" style="color: #00b894;"></i> 정확한 발음입니다!</h3>
-            <p>잘하셨습니다! 다음 단어로 넘어갑니다.</p>
-        `;
+        feedbackArea.innerHTML = `<p style="color: #00b894; font-size: 1.1em;">"${recognizedText}"</p>`;
         
         addSuccessEffect();
         
-        // 음성 분석 완료 후 타이머 재개
-        resumeWordTimer();
-        
+        // 2초 대기 중에는 타이머 멈춤
+        pauseWordTimer();
         setTimeout(() => {
             wordIndex++;
             nextWord();
+            // 게임이 아직 활성 상태일 때만 타이머 재개
+            if (gameActive) {
+                resumeWordTimer();
+            }
         }, 2000);
     };
 
     // --- 실패 처리 ---
-    const handleFailure = (message) => {
+    const handleFailure = (recognizedText) => {
         loadingMessage.style.display = 'none';
         
-        feedbackArea.innerHTML = `
-            <h3><i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i> 발음 교정이 필요합니다</h3>
-            <p>${message}</p>
-            <p>다시 한 번 시도해보세요!</p>
-        `;
+        feedbackArea.innerHTML = `<p style="color: #e74c3c; font-size: 1.1em;">"${recognizedText}"</p>`;
         
         addFailureEffect();
         
@@ -563,19 +562,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recordButton.addEventListener('click', handleRecordClick);
 
-    listenButton.addEventListener('click', () => {
-        addButtonClickEffect(listenButton, '#667eea');
-        // TTS 기능은 브라우저 지원에 따라 구현
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(currentWord);
-            utterance.lang = 'ko-KR';
-            utterance.rate = 0.8;
-            speechSynthesis.speak(utterance);
-        } else {
-            feedbackArea.innerHTML = "<p>브라우저에서 음성 합성을 지원하지 않습니다.</p>";
-        }
-    });
-
     restartGameBtn.addEventListener('click', () => {
         addButtonClickEffect(restartGameBtn, '#667eea');
         if (currentMode === 'LEVEL') {
@@ -586,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentMode === 'LONG_SENTENCE') {
             startGame(longSentences);
         } else {
-            initializeGame();
+            initializeGame(); 
         }
     });
 
